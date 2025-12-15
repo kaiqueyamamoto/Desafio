@@ -1,6 +1,14 @@
 import { LoginFormData, RegisterFormData } from '@/lib/schemas/auth.schema';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+// Usar URL relativa para chamadas de API no mesmo domínio
+const getApiUrl = () => {
+  if (typeof window !== 'undefined') {
+    // No cliente, usar URL relativa
+    return '';
+  }
+  // No servidor, usar variável de ambiente ou localhost
+  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+};
 
 export interface AuthResponse {
   token: string;
@@ -21,40 +29,56 @@ export interface RegisterResponse {
 }
 
 export async function login(data: LoginFormData): Promise<AuthResponse> {
-  const response = await fetch(`${API_URL}/api/auth/login`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data),
-  });
+  try {
+    const apiUrl = getApiUrl();
+    const response = await fetch(`${apiUrl}/api/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Erro ao fazer login');
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Erro ao fazer login' }));
+      throw new Error(error.error || 'Erro ao fazer login');
+    }
+
+    return response.json();
+  } catch (error) {
+    if (error instanceof TypeError && error.message === 'Failed to fetch') {
+      throw new Error('Não foi possível conectar ao servidor. Verifique se o servidor está rodando.');
+    }
+    throw error;
   }
-
-  return response.json();
 }
 
 export async function register(data: RegisterFormData): Promise<RegisterResponse> {
-  // Remover confirmPassword antes de enviar
-  const { confirmPassword, ...registerData } = data;
-  
-  const response = await fetch(`${API_URL}/api/auth/register`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(registerData),
-  });
+  try {
+    // Remover confirmPassword antes de enviar
+    const { confirmPassword, ...registerData } = data;
+    
+    const apiUrl = getApiUrl();
+    const response = await fetch(`${apiUrl}/api/auth/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(registerData),
+    });
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Erro ao registrar usuário');
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Erro ao registrar usuário' }));
+      throw new Error(error.error || 'Erro ao registrar usuário');
+    }
+
+    return response.json();
+  } catch (error) {
+    if (error instanceof TypeError && error.message === 'Failed to fetch') {
+      throw new Error('Não foi possível conectar ao servidor. Verifique se o servidor está rodando.');
+    }
+    throw error;
   }
-
-  return response.json();
 }
 
 export function getAuthToken(): string | null {
