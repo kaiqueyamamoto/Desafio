@@ -179,12 +179,20 @@ desafio/
 ## 📝 Padrões de Desenvolvimento
 
 ### Commits
+- **OBRIGATÓRIO**: Fazer um commit separado para cada arquivo alterado/criado
+- Cada alteração deve ter seu próprio commit com mensagem descritiva
 - Usar Conventional Commits
 - Exemplos:
   - `feat: adiciona página de login`
   - `fix: corrige validação de email`
   - `refactor: reorganiza estrutura de componentes`
   - `test: adiciona testes para auth service`
+  - `docs: adiciona decorators Swagger no AuthController`
+- **Regra de Commits Separados**:
+  - Se você modificar múltiplos arquivos, criar um commit para cada arquivo
+  - Se criar novos arquivos, cada arquivo novo deve ter seu próprio commit
+  - Commits devem ser atômicos e focados em uma única mudança
+  - Exemplo: Se você adicionar Swagger em 5 arquivos, fazer 5 commits separados
 
 ### Testes
 - **Backend**: Testes obrigatórios para endpoints da API
