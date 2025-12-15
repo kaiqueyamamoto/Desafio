@@ -1,4 +1,5 @@
 import { Task, TaskStatus, CreateTaskDto, UpdateTaskDto } from '@/types';
+import { refreshToken } from './auth';
 
 // Usar URL relativa para chamadas de API no mesmo domínio
 const getApiUrl = () => {
@@ -12,6 +13,23 @@ const getApiUrl = () => {
 
 export interface TasksResponse {
   tasks: Task[];
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+}
+
+export interface TasksQueryParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: TaskStatus | 'all';
+  sortBy?: 'created_at' | 'updated_at' | 'title' | 'status';
+  sortOrder?: 'asc' | 'desc';
 }
 
 export interface TaskResponse {
@@ -30,9 +48,46 @@ function getAuthHeaders() {
   };
 }
 
-export async function getTasks(): Promise<TasksResponse> {
+// Interceptor para renovar token automaticamente
+async function fetchWithTokenRefresh(url: string, options: RequestInit): Promise<Response> {
+  const response = await fetch(url, options);
+
+  // Se o token expirou (401), tentar renovar
+  if (response.status === 401) {
+    try {
+      await refreshToken();
+      // Tentar novamente com o novo token
+      const newHeaders = { ...options.headers, ...getAuthHeaders() };
+      return fetch(url, { ...options, headers: newHeaders });
+    } catch (error) {
+      // Se não conseguir renovar, redirecionar para login
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('refresh_token');
+        window.location.href = '/login';
+      }
+      throw error;
+    }
+  }
+
+  return response;
+}
+
+export async function getTasks(params?: TasksQueryParams): Promise<TasksResponse> {
   const apiUrl = getApiUrl();
-  const response = await fetch(`${apiUrl}/api/tasks`, {
+  const queryParams = new URLSearchParams();
+  
+  if (params) {
+    if (params.page) queryParams.append('page', params.page.toString());
+    if (params.limit) queryParams.append('limit', params.limit.toString());
+    if (params.search) queryParams.append('search', params.search);
+    if (params.status && params.status !== 'all') queryParams.append('status', params.status);
+    if (params.sortBy) queryParams.append('sortBy', params.sortBy);
+    if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder);
+  }
+
+  const url = `${apiUrl}/api/tasks${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+  const response = await fetchWithTokenRefresh(url, {
     method: 'GET',
     headers: getAuthHeaders(),
   });
@@ -47,7 +102,7 @@ export async function getTasks(): Promise<TasksResponse> {
 
 export async function createTask(data: CreateTaskDto): Promise<TaskResponse> {
   const apiUrl = getApiUrl();
-  const response = await fetch(`${apiUrl}/api/tasks`, {
+  const response = await fetchWithTokenRefresh(`${apiUrl}/api/tasks`, {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify(data),
@@ -66,7 +121,7 @@ export async function updateTask(
   data: UpdateTaskDto
 ): Promise<TaskResponse> {
   const apiUrl = getApiUrl();
-  const response = await fetch(`${apiUrl}/api/tasks/${id}`, {
+  const response = await fetchWithTokenRefresh(`${apiUrl}/api/tasks/${id}`, {
     method: 'PUT',
     headers: getAuthHeaders(),
     body: JSON.stringify(data),
@@ -82,7 +137,7 @@ export async function updateTask(
 
 export async function deleteTask(id: number): Promise<DeleteTaskResponse> {
   const apiUrl = getApiUrl();
-  const response = await fetch(`${apiUrl}/api/tasks/${id}`, {
+  const response = await fetchWithTokenRefresh(`${apiUrl}/api/tasks/${id}`, {
     method: 'DELETE',
     headers: getAuthHeaders(),
   });
