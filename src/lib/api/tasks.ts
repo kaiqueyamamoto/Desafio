@@ -1,6 +1,14 @@
 import { Task, TaskStatus, CreateTaskDto, UpdateTaskDto } from '@/types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+// Usar URL relativa para chamadas de API no mesmo domínio
+const getApiUrl = () => {
+  if (typeof window !== 'undefined') {
+    // No cliente, usar URL relativa
+    return '';
+  }
+  // No servidor, usar variável de ambiente ou localhost
+  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+};
 
 export interface TasksResponse {
   tasks: Task[];
@@ -23,7 +31,8 @@ function getAuthHeaders() {
 }
 
 export async function getTasks(): Promise<TasksResponse> {
-  const response = await fetch(`${API_URL}/api/tasks`, {
+  const apiUrl = getApiUrl();
+  const response = await fetch(`${apiUrl}/api/tasks`, {
     method: 'GET',
     headers: getAuthHeaders(),
   });
@@ -37,7 +46,8 @@ export async function getTasks(): Promise<TasksResponse> {
 }
 
 export async function createTask(data: CreateTaskDto): Promise<TaskResponse> {
-  const response = await fetch(`${API_URL}/api/tasks`, {
+  const apiUrl = getApiUrl();
+  const response = await fetch(`${apiUrl}/api/tasks`, {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify(data),
@@ -55,7 +65,8 @@ export async function updateTask(
   id: number,
   data: UpdateTaskDto
 ): Promise<TaskResponse> {
-  const response = await fetch(`${API_URL}/api/tasks/${id}`, {
+  const apiUrl = getApiUrl();
+  const response = await fetch(`${apiUrl}/api/tasks/${id}`, {
     method: 'PUT',
     headers: getAuthHeaders(),
     body: JSON.stringify(data),
@@ -70,7 +81,8 @@ export async function updateTask(
 }
 
 export async function deleteTask(id: number): Promise<DeleteTaskResponse> {
-  const response = await fetch(`${API_URL}/api/tasks/${id}`, {
+  const apiUrl = getApiUrl();
+  const response = await fetch(`${apiUrl}/api/tasks/${id}`, {
     method: 'DELETE',
     headers: getAuthHeaders(),
   });
