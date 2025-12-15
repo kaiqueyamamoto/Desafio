@@ -3,23 +3,19 @@ import {
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
-import { Task, TaskStatus } from '../entities/task.entity';
+import { TaskStatus } from '@prisma/client';
 
 @Injectable()
 export class TasksService {
-  constructor(
-    @InjectRepository(Task)
-    private readonly taskRepository: Repository<Task>,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async findAll(userId: number) {
-    const tasks = await this.taskRepository.find({
+    const tasks = await this.prisma.task.findMany({
       where: { user_id: userId },
-      order: { created_at: 'DESC' },
+      orderBy: { created_at: 'desc' },
     });
 
     return { tasks };
@@ -28,14 +24,14 @@ export class TasksService {
   async create(userId: number, createTaskDto: CreateTaskDto) {
     const { title, description, status } = createTaskDto;
 
-    const task = this.taskRepository.create({
-      user_id: userId,
-      title,
-      description: description || null,
-      status: (status as TaskStatus) || TaskStatus.PENDING,
+    const savedTask = await this.prisma.task.create({
+      data: {
+        user_id: userId,
+        title,
+        description: description || null,
+        status: (status as TaskStatus) || TaskStatus.PENDING,
+      },
     });
-
-    const savedTask = await this.taskRepository.save(task);
 
     return { task: savedTask };
   }
@@ -76,7 +72,7 @@ export class TasksService {
 
   async remove(userId: number, id: number) {
     // Verificar se a tarefa existe e pertence ao usuário
-    const task = await this.taskRepository.findOne({
+    const task = await this.prisma.task.findUnique({
       where: { id },
     });
 
@@ -90,7 +86,9 @@ export class TasksService {
       );
     }
 
-    await this.taskRepository.remove(task);
+    await this.prisma.task.delete({
+      where: { id },
+    });
 
     return { message: 'Tarefa deletada com sucesso' };
   }
