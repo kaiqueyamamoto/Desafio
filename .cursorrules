@@ -319,16 +319,139 @@ pnpm start
 ```
 
 ### 3. Testes
+
+#### Executar Testes
 ```bash
-# Todos os testes
+# Executar todos os testes
 pnpm test
 
-# Testes em modo watch
+# Executar testes em modo watch (re-executa ao salvar arquivos)
 pnpm test:watch
 
-# Cobertura de testes
+# Executar testes com relatório de cobertura
 pnpm test:cov
+
+# Executar testes de um arquivo específico
+pnpm test tests/api/auth.test.ts
+
+# Executar testes com verbose (mostra todos os testes)
+pnpm test --verbose
 ```
+
+#### Etapas para Escrever Testes
+
+1. **Criar arquivo de teste**
+   - Localização: `tests/api/[nome].test.ts`
+   - Nome do arquivo deve corresponder ao arquivo testado
+
+2. **Configurar mocks**
+   ```typescript
+   jest.mock('@/lib/db', () => ({
+     prisma: {
+       user: { findUnique: jest.fn(), create: jest.fn() },
+       task: { findMany: jest.fn(), findUnique: jest.fn() },
+     },
+   }));
+   ```
+
+3. **Escrever casos de teste**
+   - Teste de sucesso (happy path)
+   - Teste de erro (validação, autenticação, etc.)
+   - Teste de isolamento de dados
+   - Teste de edge cases
+
+4. **Executar e verificar**
+   ```bash
+   pnpm test tests/api/[nome].test.ts
+   ```
+
+#### Exemplo Completo de Teste
+```typescript
+// tests/api/tasks.test.ts
+import { GET, POST } from '@/app/api/tasks/route';
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/db';
+import { authenticateRequest } from '@/lib/middleware';
+
+jest.mock('@/lib/db');
+jest.mock('@/lib/middleware');
+
+describe('Tasks API Routes', () => {
+  const mockUser = { userId: 1, email: 'user@example.com', name: 'User' };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (authenticateRequest as jest.Mock).mockResolvedValue({ user: mockUser });
+  });
+
+  describe('GET /api/tasks', () => {
+    it('deve retornar todas as tarefas do usuário autenticado', async () => {
+      const mockTasks = [
+        { id: 1, user_id: 1, title: 'Tarefa 1', status: 'PENDING' },
+      ];
+      (prisma.task.findMany as jest.Mock).mockResolvedValue(mockTasks);
+
+      const request = new NextRequest('http://localhost:3000/api/tasks', {
+        method: 'GET',
+        headers: { authorization: 'Bearer token' },
+      });
+
+      const response = await GET(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.tasks).toHaveLength(1);
+      expect(prisma.task.findMany).toHaveBeenCalledWith({
+        where: { user_id: 1 },
+        orderBy: { created_at: 'desc' },
+      });
+    });
+
+    it('deve retornar erro quando não autenticado', async () => {
+      (authenticateRequest as jest.Mock).mockResolvedValue(
+        NextResponse.json({ error: 'Token não fornecido' }, { status: 401 })
+      );
+
+      const request = new NextRequest('http://localhost:3000/api/tasks', {
+        method: 'GET',
+      });
+
+      const response = await GET(request);
+      expect(response.status).toBe(401);
+    });
+
+    it('deve retornar apenas tarefas do usuário autenticado (isolamento)', async () => {
+      const mockTasks = [
+        { id: 1, user_id: 1, title: 'Tarefa do usuário 1' },
+        { id: 2, user_id: 1, title: 'Outra tarefa do usuário 1' },
+      ];
+      (prisma.task.findMany as jest.Mock).mockResolvedValue(mockTasks);
+
+      const request = new NextRequest('http://localhost:3000/api/tasks', {
+        method: 'GET',
+        headers: { authorization: 'Bearer token' },
+      });
+
+      const response = await GET(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      data.tasks.forEach((task: any) => {
+        expect(task.user_id).toBe(1);
+      });
+    });
+  });
+});
+```
+
+#### Boas Práticas de Testes
+- **Sempre mockar dependências externas** (Prisma, bcrypt, etc.)
+- **Usar senhas fortes nos testes** (ex: `Senha123!@#`)
+- **Testar casos de sucesso e erro**
+- **Verificar isolamento de dados** (usuários não podem acessar dados de outros)
+- **Limpar mocks entre testes** (`beforeEach` com `jest.clearAllMocks()`)
+- **Usar nomes descritivos** para os testes
+- **Seguir padrão AAA** (Arrange, Act, Assert)
 
 ### 4. Prisma
 ```bash
@@ -410,7 +533,11 @@ Antes de commitar, verificar:
 - [ ] Código formatado com Prettier
 - [ ] Sem erros de lint
 - [ ] TypeScript sem erros
-- [ ] Testes passando
+- [ ] **Testes passando** (`pnpm test`)
+- [ ] **Cobertura de testes mínima de 60%** (`pnpm test:cov`)
+- [ ] **Testes de autenticação implementados** (registro, login, token inválido)
+- [ ] **Testes de CRUD implementados** (GET, POST, PUT, DELETE)
+- [ ] **Testes de isolamento de dados implementados**
 - [ ] Variáveis de ambiente não commitadas
 - [ ] Commits com mensagens descritivas
 - [ ] Código segue as convenções do projeto
