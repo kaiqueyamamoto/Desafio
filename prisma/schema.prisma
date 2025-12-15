@@ -18,6 +18,7 @@ model User {
   token_version Int     @default(0)
   created_at   DateTime @default(now()) @map("created_at")
   tasks        Task[]
+  refresh_tokens RefreshToken[]
 
   @@map("users")
   @@index([email])
@@ -37,6 +38,20 @@ model Task {
   @@index([user_id])
   @@index([status])
   @@index([created_at])
+}
+
+model RefreshToken {
+  id         Int      @id @default(autoincrement())
+  token      String   @unique @db.VarChar(500)
+  user_id    Int      @map("user_id")
+  expires_at DateTime @map("expires_at")
+  created_at DateTime @default(now()) @map("created_at")
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+  @@index([user_id])
+  @@index([token])
+  @@index([expires_at])
 }
 
 enum TaskStatus {
