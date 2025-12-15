@@ -11,6 +11,7 @@ export default function LoginPage() {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<LoginFormData>({
+    // @ts-ignore - zodResolver tem problema de tipos com versões mais recentes do zod
     resolver: zodResolver(loginSchema),
   });
 
