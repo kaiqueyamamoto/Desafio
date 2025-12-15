@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { login, register, setAuthToken, removeAuthToken } from '@/lib/api/auth';
+import { login, register, setAuthTokens, removeAuthTokens } from '@/lib/api/auth';
 import { LoginFormData, RegisterFormData } from '@/lib/schemas/auth.schema';
 
 export function useLogin() {
@@ -9,7 +9,7 @@ export function useLogin() {
   return useMutation({
     mutationFn: (data: LoginFormData) => login(data),
     onSuccess: (response) => {
-      setAuthToken(response.token);
+      setAuthTokens(response.accessToken, response.refreshToken);
       window.location.href = '/dashboard';
     },
     onError: (error: Error) => {
@@ -36,7 +36,7 @@ export function useLogout() {
   const router = useRouter();
 
   return () => {
-    removeAuthToken();
+    removeAuthTokens();
     router.push('/login');
   };
 }

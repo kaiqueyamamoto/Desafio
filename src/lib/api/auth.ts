@@ -11,7 +11,17 @@ const getApiUrl = () => {
 };
 
 export interface AuthResponse {
-  token: string;
+  accessToken: string;
+  refreshToken: string;
+  user: {
+    id: number;
+    name: string;
+    email: string;
+  };
+}
+
+export interface RefreshTokenResponse {
+  accessToken: string;
   user: {
     id: number;
     name: string;
@@ -86,16 +96,65 @@ export function getAuthToken(): string | null {
   return localStorage.getItem('auth_token');
 }
 
-export function setAuthToken(token: string): void {
+export function getRefreshToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem('refresh_token');
+}
+
+export function setAuthTokens(accessToken: string, refreshToken: string): void {
   if (typeof window === 'undefined') return;
-  localStorage.setItem('auth_token', token);
+  localStorage.setItem('auth_token', accessToken);
+  localStorage.setItem('refresh_token', refreshToken);
   // Também salvar em cookie para o middleware do Next.js
-  document.cookie = `auth_token=${token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+  document.cookie = `auth_token=${accessToken}; path=/; max-age=${60 * 15}; SameSite=Lax`; // 15 minutos
+  document.cookie = `refresh_token=${refreshToken}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`; // 7 dias
+}
+
+export function removeAuthTokens(): void {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem('auth_token');
+  localStorage.removeItem('refresh_token');
+  // Remover cookies também
+  document.cookie = 'auth_token=; path=/; max-age=0';
+  document.cookie = 'refresh_token=; path=/; max-age=0';
+}
+
+// Manter compatibilidade com código existente
+export function setAuthToken(token: string): void {
+  const refreshToken = getRefreshToken() || '';
+  setAuthTokens(token, refreshToken);
 }
 
 export function removeAuthToken(): void {
-  if (typeof window === 'undefined') return;
-  localStorage.removeItem('auth_token');
-  // Remover cookie também
-  document.cookie = 'auth_token=; path=/; max-age=0';
+  removeAuthTokens();
+}
+
+export async function refreshToken(): Promise<RefreshTokenResponse> {
+  const refreshTokenValue = getRefreshToken();
+  if (!refreshTokenValue) {
+    throw new Error('Refresh token não encontrado');
+  }
+
+  const apiUrl = getApiUrl();
+  const response = await fetch(`${apiUrl}/api/auth/refresh`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ refreshToken: refreshTokenValue }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Erro ao renovar token' }));
+    throw new Error(error.error || 'Erro ao renovar token');
+  }
+
+  const data: RefreshTokenResponse = await response.json();
+  
+  // Atualizar access token no localStorage
+  if (refreshTokenValue) {
+    setAuthTokens(data.accessToken, refreshTokenValue);
+  }
+
+  return data;
 }

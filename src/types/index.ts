@@ -50,3 +50,8 @@ export interface JwtPayload {
   email: string;
   tokenVersion: number;
 }
+
+export interface AuthTokens {
+  accessToken: string;
+  refreshToken: string;
+}
