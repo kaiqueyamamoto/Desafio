@@ -15,6 +15,25 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
+
+  # Aplicação Next.js (opcional - descomente se quiser rodar a aplicação no Docker)
+  # app:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: desafio-app
+  #   ports:
+  #     - 3000:3000
+  #   environment:
+  #     - DATABASE_URL=mysql://root:root@mysql:3306/task_manager
+  #     - JWT_SECRET=${JWT_SECRET:-your-secret-key}
+  #     - JWT_EXPIRES_IN=24h
+  #     - NODE_ENV=production
+  #   depends_on:
+  #     mysql:
+  #       condition: service_healthy
+  #   restart: unless-stopped
 
 volumes:
   mysql_data:
