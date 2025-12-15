@@ -45,7 +45,7 @@ describe('Auth API Routes', () => {
         body: JSON.stringify({
           name: 'João Silva',
           email: 'joao@example.com',
-          password: 'senha123456',
+          password: 'Senha123!@#',
         }),
       });
 
@@ -78,7 +78,7 @@ describe('Auth API Routes', () => {
         body: JSON.stringify({
           name: 'João Silva',
           email: 'joao@example.com',
-          password: 'senha123456',
+          password: 'Senha123!@#',
         }),
       });
 
@@ -130,7 +130,7 @@ describe('Auth API Routes', () => {
         method: 'POST',
         body: JSON.stringify({
           email: 'joao@example.com',
-          password: 'senha123456',
+          password: 'Senha123!@#',
         }),
       });
 
@@ -153,7 +153,7 @@ describe('Auth API Routes', () => {
         method: 'POST',
         body: JSON.stringify({
           email: 'joao@example.com',
-          password: 'senha123456',
+          password: 'Senha123!@#',
         }),
       });
 
@@ -180,7 +180,7 @@ describe('Auth API Routes', () => {
         method: 'POST',
         body: JSON.stringify({
           email: 'joao@example.com',
-          password: 'senhaErrada',
+          password: 'SenhaErrada123!@#',
         }),
       });
 
