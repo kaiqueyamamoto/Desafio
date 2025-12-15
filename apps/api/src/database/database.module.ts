@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, Logger } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '../entities/user.entity';
@@ -10,12 +10,13 @@ import { Task } from '../entities/task.entity';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
+        const logger = new Logger('DatabaseModule');
         const password = configService.get<string>('DB_PASSWORD');
         
         if (password === undefined || password === null) {
-          console.error('❌ ERRO: DB_PASSWORD não está definida no arquivo .env');
-          console.error('   Por favor, defina DB_PASSWORD no arquivo .env');
-          console.error('   Exemplo: DB_PASSWORD=root');
+          logger.error('❌ ERRO: DB_PASSWORD não está definida no arquivo .env');
+          logger.error('   Por favor, defina DB_PASSWORD no arquivo .env');
+          logger.error('   Exemplo: DB_PASSWORD=root');
         }
 
         return {
@@ -38,4 +39,3 @@ import { Task } from '../entities/task.entity';
   exports: [TypeOrmModule],
 })
 export class DatabaseModule {}
-
