@@ -7,6 +7,7 @@ import { useLogout } from '@/lib/hooks/use-auth';
 import { useTheme } from '@/lib/hooks/use-theme';
 import { TaskStatus, Task } from '@/types';
 import { useState } from 'react';
+import KanbanBoard from '@/components/KanbanBoard';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -25,6 +26,7 @@ export default function DashboardPage() {
   const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
   const [editTaskTitle, setEditTaskTitle] = useState('');
   const [editTaskDescription, setEditTaskDescription] = useState('');
+  const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
 
   // Função helper para extrair mensagem de erro
   const getErrorMessage = (error: unknown): string => {
@@ -195,6 +197,41 @@ export default function DashboardPage() {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
           <div className="flex items-center space-x-3">
+            {/* Toggle de visualização Lista/Kanban */}
+            <div className="flex items-center space-x-2 bg-gray-200 dark:bg-gray-700 rounded-lg p-1">
+              <button
+                onClick={() => setViewMode('list')}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  viewMode === 'list'
+                    ? 'bg-white dark:bg-gray-800 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                }`}
+                title="Visualização em Lista"
+              >
+                <div className="flex items-center space-x-1">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                  <span>Lista</span>
+                </div>
+              </button>
+              <button
+                onClick={() => setViewMode('kanban')}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  viewMode === 'kanban'
+                    ? 'bg-white dark:bg-gray-800 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                }`}
+                title="Visualização Kanban"
+              >
+                <div className="flex items-center space-x-1">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+                  </svg>
+                  <span>Kanban</span>
+                </div>
+              </button>
+            </div>
             <button
               onClick={toggleTheme}
               className="p-2 rounded-md bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
@@ -279,10 +316,11 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Formulário de nova tarefa */}
-        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-6 transition-colors">
-          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Nova Tarefa</h2>
-          <form onSubmit={handleCreateTask} className="space-y-4">
+        {/* Formulário de nova tarefa - apenas no modo lista */}
+        {viewMode === 'list' && (
+          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-6 transition-colors">
+            <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Nova Tarefa</h2>
+            <form onSubmit={handleCreateTask} className="space-y-4">
             <div>
               <label htmlFor="task-title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Título da tarefa
@@ -322,9 +360,37 @@ export default function DashboardPage() {
             </button>
           </form>
         </div>
+        )}
 
-        {/* Lista de tarefas */}
-        <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden transition-colors">
+        {/* Lista de tarefas ou Kanban */}
+        {viewMode === 'kanban' ? (
+          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 transition-colors">
+            <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
+              Suas Tarefas ({allTasks.length})
+            </h2>
+            <KanbanBoard
+              tasks={allTasks}
+              onEditTask={handleEditTask}
+              onDeleteTask={handleDeleteTask}
+              editingTaskId={editingTaskId}
+              editTaskTitle={editTaskTitle}
+              editTaskDescription={editTaskDescription}
+              onEditTaskTitleChange={setEditTaskTitle}
+              onEditTaskDescriptionChange={setEditTaskDescription}
+              onCancelEdit={handleCancelEdit}
+              onSaveEdit={handleSaveEdit}
+              updateTaskMutation={updateTaskMutation}
+              deleteTaskMutation={deleteTaskMutation}
+              newTaskTitle={newTaskTitle}
+              newTaskDescription={newTaskDescription}
+              onNewTaskTitleChange={setNewTaskTitle}
+              onNewTaskDescriptionChange={setNewTaskDescription}
+              onCreateTask={handleCreateTask}
+              createTaskMutation={createTaskMutation}
+            />
+          </div>
+        ) : (
+          <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden transition-colors">
           <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
@@ -605,6 +671,7 @@ export default function DashboardPage() {
             </ul>
           )}
         </div>
+        )}
       </div>
     </div>
   );
