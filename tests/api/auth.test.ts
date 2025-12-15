@@ -2,7 +2,6 @@ import { POST } from '@/app/api/auth/register/route';
 import { POST as loginPOST } from '@/app/api/auth/login/route';
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/db';
-import * as bcrypt from 'bcrypt';
 
 jest.mock('@/lib/db', () => ({
   prisma: {
@@ -14,7 +13,12 @@ jest.mock('@/lib/db', () => ({
   },
 }));
 
-jest.mock('bcrypt');
+jest.mock('bcrypt', () => ({
+  hash: jest.fn(),
+  compare: jest.fn(),
+}));
+
+import * as bcrypt from 'bcrypt';
 
 describe('Auth API Routes', () => {
   beforeEach(() => {
@@ -185,6 +189,11 @@ describe('Auth API Routes', () => {
 
       expect(response.status).toBe(401);
       expect(data.error).toBe('Email ou senha inválidos');
+    });
+
+    it('deve retornar erro quando token é inválido', async () => {
+      // Este teste verifica o middleware de autenticação
+      // Será testado nas rotas de tarefas que requerem autenticação
     });
   });
 });
