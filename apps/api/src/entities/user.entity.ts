@@ -21,6 +21,9 @@ export class User {
   @Column({ type: 'varchar', length: 255 })
   password: string;
 
+  @Column({ name: 'token_version', type: 'int', default: 0 })
+  token_version: number;
+
   @CreateDateColumn({ name: 'created_at' })
   created_at: Date;
 
