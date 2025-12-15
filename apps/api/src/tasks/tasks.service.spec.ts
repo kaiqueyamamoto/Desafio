@@ -250,12 +250,9 @@ describe('TasksService', () => {
 
       mockDb.execute.mockResolvedValueOnce([[]]);
 
-      await expect(
-        service.update(userId, taskId, updateTaskDto),
-      ).rejects.toThrow(NotFoundException);
-      await expect(
-        service.update(userId, taskId, updateTaskDto),
-      ).rejects.toThrow('Tarefa não encontrada');
+      const promise = service.update(userId, taskId, updateTaskDto);
+      await expect(promise).rejects.toThrow(NotFoundException);
+      await expect(promise).rejects.toThrow('Tarefa não encontrada');
     });
 
     it('deve lançar ForbiddenException quando tarefa pertence a outro usuário', async () => {
@@ -276,12 +273,9 @@ describe('TasksService', () => {
 
       mockDb.execute.mockResolvedValueOnce([[mockExistingTask]]);
 
-      await expect(
-        service.update(userId, taskId, updateTaskDto),
-      ).rejects.toThrow(ForbiddenException);
-      await expect(
-        service.update(userId, taskId, updateTaskDto),
-      ).rejects.toThrow('Você não tem permissão para acessar esta tarefa');
+      const promise = service.update(userId, taskId, updateTaskDto);
+      await expect(promise).rejects.toThrow(ForbiddenException);
+      await expect(promise).rejects.toThrow('Você não tem permissão para acessar esta tarefa');
     });
   });
 
@@ -322,12 +316,9 @@ describe('TasksService', () => {
 
       mockDb.execute.mockResolvedValueOnce([[]]);
 
-      await expect(service.remove(userId, taskId)).rejects.toThrow(
-        NotFoundException,
-      );
-      await expect(service.remove(userId, taskId)).rejects.toThrow(
-        'Tarefa não encontrada',
-      );
+      const promise = service.remove(userId, taskId);
+      await expect(promise).rejects.toThrow(NotFoundException);
+      await expect(promise).rejects.toThrow('Tarefa não encontrada');
     });
 
     it('deve lançar ForbiddenException quando tarefa pertence a outro usuário', async () => {
@@ -345,12 +336,9 @@ describe('TasksService', () => {
 
       mockDb.execute.mockResolvedValueOnce([[mockExistingTask]]);
 
-      await expect(service.remove(userId, taskId)).rejects.toThrow(
-        ForbiddenException,
-      );
-      await expect(service.remove(userId, taskId)).rejects.toThrow(
-        'Você não tem permissão para acessar esta tarefa',
-      );
+      const promise = service.remove(userId, taskId);
+      await expect(promise).rejects.toThrow(ForbiddenException);
+      await expect(promise).rejects.toThrow('Você não tem permissão para acessar esta tarefa');
     });
   });
 });
