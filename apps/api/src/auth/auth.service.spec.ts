@@ -92,12 +92,9 @@ describe('AuthService', () => {
         [{ id: 1 }],
       ]); // Email já existe
 
-      await expect(service.register(registerDto)).rejects.toThrow(
-        ConflictException,
-      );
-      await expect(service.register(registerDto)).rejects.toThrow(
-        'Email já está em uso',
-      );
+      const promise = service.register(registerDto);
+      await expect(promise).rejects.toThrow(ConflictException);
+      await expect(promise).rejects.toThrow('Email já está em uso');
       expect(bcrypt.hash).not.toHaveBeenCalled();
     });
   });
