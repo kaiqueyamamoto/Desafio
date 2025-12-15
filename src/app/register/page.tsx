@@ -11,6 +11,7 @@ export default function RegisterPage() {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormData>({
+    // @ts-ignore - zodResolver tem problema de tipos com versões mais recentes do zod
     resolver: zodResolver(registerSchema),
   });
 
