@@ -3,19 +3,16 @@ import {
   UnauthorizedException,
   ConflictException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
-import { User } from '../entities/user.entity';
 
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+    private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
   ) {}
 
@@ -23,7 +20,7 @@ export class AuthService {
     const { name, email, password } = registerDto;
 
     // Verificar se email já existe
-    const existingUser = await this.userRepository.findOne({
+    const existingUser = await this.prisma.user.findUnique({
       where: { email },
     });
 
@@ -35,13 +32,14 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Criar usuário
-    const user = this.userRepository.create({
-      name,
-      email,
-      password: hashedPassword,
+    const savedUser = await this.prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        token_version: 0,
+      },
     });
-
-    const savedUser = await this.userRepository.save(user);
 
     return {
       message: 'Usuário criado com sucesso',
@@ -57,9 +55,15 @@ export class AuthService {
     const { email, password } = loginDto;
 
     // Buscar usuário
-    const user = await this.userRepository.findOne({
+    const user = await this.prisma.user.findUnique({
       where: { email },
-      select: ['id', 'name', 'email', 'password'],
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        password: true,
+        token_version: true,
+      },
     });
 
     if (!user) {
@@ -74,14 +78,20 @@ export class AuthService {
     }
 
     // Incrementar token_version para invalidar tokens antigos
-    user.token_version = (user.token_version || 0) + 1;
-    await this.userRepository.save(user);
+    const updatedUser = await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        token_version: {
+          increment: 1,
+        },
+      },
+    });
 
     // Gerar token JWT com token_version
     const payload = {
       sub: user.id,
       email: user.email,
-      tokenVersion: user.token_version,
+      tokenVersion: updatedUser.token_version,
     };
     const token = this.jwtService.sign(payload);
 
@@ -96,9 +106,14 @@ export class AuthService {
   }
 
   async getUserInfo(userId: number) {
-    const user = await this.userRepository.findOne({
+    const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: ['id', 'name', 'email', 'created_at'],
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        created_at: true,
+      },
     });
 
     if (!user) {
