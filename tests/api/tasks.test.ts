@@ -1,6 +1,6 @@
 import { GET, POST } from '@/app/api/tasks/route';
 import { PUT, DELETE } from '@/app/api/tasks/[id]/route';
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { TaskStatus } from '@/types';
 
@@ -31,6 +31,7 @@ describe('Tasks API Routes', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // Reset para retornar usuário autenticado por padrão
     (authenticateRequest as jest.Mock).mockResolvedValue({ user: mockUser });
   });
 
@@ -79,9 +80,7 @@ describe('Tasks API Routes', () => {
 
     it('deve retornar erro quando não autenticado', async () => {
       (authenticateRequest as jest.Mock).mockResolvedValue(
-        new Response(JSON.stringify({ error: 'Token não fornecido' }), {
-          status: 401,
-        })
+        NextResponse.json({ error: 'Token não fornecido' }, { status: 401 })
       );
 
       const request = new NextRequest('http://localhost:3000/api/tasks', {
@@ -91,6 +90,53 @@ describe('Tasks API Routes', () => {
       const response = await GET(request);
 
       expect(response.status).toBe(401);
+    });
+
+    it('deve retornar apenas tarefas do usuário autenticado (isolamento)', async () => {
+      const mockTasks = [
+        {
+          id: 1,
+          user_id: 1, // Usuário autenticado
+          title: 'Tarefa do usuário 1',
+          description: 'Descrição',
+          status: TaskStatus.PENDING,
+          created_at: new Date(),
+          updated_at: new Date(),
+        },
+        {
+          id: 2,
+          user_id: 1, // Usuário autenticado
+          title: 'Outra tarefa do usuário 1',
+          description: 'Descrição',
+          status: TaskStatus.PENDING,
+          created_at: new Date(),
+          updated_at: new Date(),
+        },
+      ];
+
+      (prisma.task.findMany as jest.Mock).mockResolvedValue(mockTasks);
+
+      const request = new NextRequest('http://localhost:3000/api/tasks', {
+        method: 'GET',
+        headers: {
+          authorization: 'Bearer token',
+        },
+      });
+
+      const response = await GET(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.tasks).toHaveLength(2);
+      // Verificar que todas as tarefas pertencem ao usuário autenticado
+      data.tasks.forEach((task: any) => {
+        expect(task.user_id).toBe(1);
+      });
+      // Verificar que o filtro foi aplicado corretamente
+      expect(prisma.task.findMany).toHaveBeenCalledWith({
+        where: { user_id: 1 },
+        orderBy: { created_at: 'desc' },
+      });
     });
   });
 
@@ -123,7 +169,11 @@ describe('Tasks API Routes', () => {
       const data = await response.json();
 
       expect(response.status).toBe(201);
-      expect(data.task).toEqual(mockTask);
+      expect(data.task.id).toBe(mockTask.id);
+      expect(data.task.title).toBe(mockTask.title);
+      expect(data.task.description).toBe(mockTask.description);
+      expect(data.task.status).toBe(mockTask.status);
+      expect(data.task.user_id).toBe(mockTask.user_id);
       expect(prisma.task.create).toHaveBeenCalledWith({
         data: {
           user_id: 1,
@@ -291,6 +341,54 @@ describe('Tasks API Routes', () => {
 
       expect(response.status).toBe(404);
       expect(data.error).toBe('Tarefa não encontrada');
+    });
+
+    it('deve retornar erro quando tarefa pertence a outro usuário', async () => {
+      const existingTask = {
+        id: 1,
+        user_id: 2, // Pertence a outro usuário
+        title: 'Tarefa para deletar',
+        description: 'Descrição',
+        status: TaskStatus.PENDING,
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
+
+      (prisma.task.findUnique as jest.Mock).mockResolvedValue(existingTask);
+
+      const request = new NextRequest('http://localhost:3000/api/tasks/1', {
+        method: 'DELETE',
+        headers: {
+          authorization: 'Bearer token',
+        },
+      });
+
+      const response = await DELETE(request, { params: { id: '1' } });
+      const data = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(data.error).toBe('Você não tem permissão para acessar esta tarefa');
+    });
+
+    it('deve retornar erro quando token é inválido', async () => {
+      const errorResponse = NextResponse.json(
+        { error: 'Token inválido' },
+        { status: 401 }
+      );
+      (authenticateRequest as jest.Mock).mockResolvedValueOnce(errorResponse);
+
+      const request = new NextRequest('http://localhost:3000/api/tasks/1', {
+        method: 'DELETE',
+        headers: {
+          authorization: 'Bearer invalid-token',
+        },
+      });
+
+      const response = await DELETE(request, { params: { id: '1' } });
+
+      expect(response.status).toBe(401);
+      const data = await response.json();
+      expect(data.error).toBe('Token inválido');
     });
   });
 });
