@@ -23,11 +23,19 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   async validate(payload: any) {
     const user = await this.userRepository.findOne({
       where: { id: payload.sub },
-      select: ['id', 'name', 'email'],
+      select: ['id', 'name', 'email', 'token_version'],
     });
 
     if (!user) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException('Usuário não encontrado');
+    }
+
+    // Validar se o token_version do token corresponde ao do banco
+    // Se não corresponder, significa que um novo login foi feito e este token foi invalidado
+    if (payload.tokenVersion !== user.token_version) {
+      throw new UnauthorizedException(
+        'Token inválido. Um novo login foi realizado.',
+      );
     }
 
     return { userId: user.id, email: user.email, name: user.name };
