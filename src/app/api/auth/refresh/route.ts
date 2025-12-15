@@ -1,11 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { refreshAccessToken } from '@/lib/auth';
-import { z } from 'zod';
-import { addCorsHeaders, createCorsResponse } from '@/lib/cors';
-
-const refreshSchema = z.object({
-  refreshToken: z.string().min(1, 'Refresh token é obrigatório'),
-});
+import { NextRequest } from 'next/server';
+import { authController } from '@/lib/controllers/auth.controller';
+import { createCorsResponse } from '@/lib/cors';
 
 /**
  * @swagger
@@ -85,41 +80,5 @@ export async function OPTIONS() {
 }
 
 export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    
-    // Validar dados
-    const validatedData = refreshSchema.parse(body);
-
-    const result = await refreshAccessToken(validatedData.refreshToken);
-
-    const response = NextResponse.json(result, { status: 200 });
-    return addCorsHeaders(response);
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      const response = NextResponse.json(
-        { error: 'Dados inválidos', details: error.errors },
-        { status: 400 }
-      );
-      return addCorsHeaders(response);
-    }
-
-    if (error instanceof Error && (
-      error.message.includes('Refresh token') || 
-      error.message.includes('inválido') ||
-      error.message.includes('expirado')
-    )) {
-      const response = NextResponse.json(
-        { error: error.message },
-        { status: 401 }
-      );
-      return addCorsHeaders(response);
-    }
-
-    const response = NextResponse.json(
-      { error: 'Erro ao renovar token' },
-      { status: 500 }
-    );
-    return addCorsHeaders(response);
-  }
+  return authController.refresh(request);
 }
