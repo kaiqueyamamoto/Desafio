@@ -1,0 +1,369 @@
+# Cursor Rules - Desafio Técnico Full Stack Hubfy.ai
+
+## 📋 Contexto do Projeto
+
+Este é um sistema completo de gestão de tarefas desenvolvido como desafio técnico para a Hubfy.ai. O projeto utiliza uma arquitetura de **monorepo** com **Turborepo**, separando frontend (Next.js) e backend (NestJS) em workspaces independentes.
+
+## 🏗️ Arquitetura
+
+### Estrutura do Monorepo
+- **Gerenciador de Pacotes**: pnpm 8.15.0+ (obrigatório)
+- **Orquestração**: Turborepo 2.0+
+- **Workspaces**: Configurados automaticamente pelo pnpm
+  - `apps/web` - Frontend Next.js
+  - `apps/api` - Backend NestJS
+  - `packages/` - Pacotes compartilhados (futuro)
+- **Scripts do Turborepo**:
+  - `dev`: Modo desenvolvimento (cache desabilitado, persistente)
+  - `build`: Build com dependências entre workspaces
+  - `test`: Testes com dependência de build
+  - `lint`: Linting com dependências entre workspaces
+  - `clean`: Limpeza sem cache
+
+### Frontend (apps/web)
+- **Framework**: Next.js 14+ com App Router
+- **React**: 18+
+- **TypeScript**: 5.3+
+- **Styling**: Tailwind CSS 3.4+
+- **Estrutura**:
+  - `src/app/` - Páginas e rotas (App Router)
+  - `src/components/` - Componentes React reutilizáveis
+  - `src/lib/` - Utilitários e helpers
+  - `src/types/` - Definições TypeScript
+
+### Backend (apps/api)
+- **Framework**: NestJS 10+
+- **TypeScript**: 5.3+
+- **Banco de Dados**: MySQL 8+ (mysql2)
+- **Autenticação**: JWT (@nestjs/jwt)
+- **Validação**: class-validator
+- **Hash de Senhas**: bcrypt
+- **Estrutura Modular**:
+  - `src/auth/` - Módulo de autenticação
+  - `src/tasks/` - Módulo de tarefas
+  - `src/database/` - Configuração do banco
+  - `src/common/` - Guards, decorators, interceptors
+
+## 🛠️ Stack Tecnológica
+
+### Frontend
+- Next.js 14+ (App Router)
+- React 18+
+- TypeScript
+- Tailwind CSS
+- React Hook Form (diferencial - usar quando apropriado)
+- TanStack Query (diferencial - para gerenciamento de estado e cache)
+
+### Backend
+- NestJS 10+
+- TypeScript
+- MySQL 8+ (mysql2 - prepared statements)
+- JWT (@nestjs/jwt)
+- bcrypt (hash de senhas)
+- class-validator (validação de DTOs)
+- Prisma ou Drizzle (diferencial - considerar ORM)
+
+### DevOps & Ferramentas
+- Turborepo (monorepo)
+- Jest (testes)
+- ESLint (linting)
+- Prettier (formatação)
+
+## 📁 Estrutura de Pastas
+
+```
+desafio/
+├── apps/
+│   ├── web/              # Frontend Next.js
+│   │   ├── src/
+│   │   │   ├── app/      # Páginas (App Router)
+│   │   │   │   ├── login/
+│   │   │   │   ├── register/
+│   │   │   │   ├── dashboard/
+│   │   │   │   ├── layout.tsx
+│   │   │   │   └── page.tsx
+│   │   │   ├── components/  # Componentes React
+│   │   │   ├── lib/        # Utilitários
+│   │   │   └── types/      # Tipos TypeScript
+│   │   ├── package.json
+│   │   ├── next.config.js
+│   │   ├── tailwind.config.ts
+│   │   └── tsconfig.json
+│   │
+│   └── api/              # Backend NestJS
+│       ├── src/
+│       │   ├── auth/     # Módulo de autenticação
+│       │   │   ├── auth.module.ts
+│       │   │   ├── auth.controller.ts
+│       │   │   ├── auth.service.ts
+│       │   │   ├── dto/
+│       │   │   └── strategies/
+│       │   ├── tasks/    # Módulo de tarefas
+│       │   │   ├── tasks.module.ts
+│       │   │   ├── tasks.controller.ts
+│       │   │   ├── tasks.service.ts
+│       │   │   └── dto/
+│       │   ├── database/ # Configuração do banco
+│       │   │   └── database.module.ts
+│       │   ├── common/   # Recursos compartilhados
+│       │   │   ├── guards/
+│       │   │   ├── decorators/
+│       │   │   └── interceptors/
+│       │   ├── app.module.ts
+│       │   └── main.ts
+│       ├── package.json
+│       ├── nest-cli.json
+│       └── tsconfig.json
+│
+├── database/
+│   └── schema.sql        # Schema do banco de dados MySQL
+│
+├── packages/             # Pacotes compartilhados (futuro)
+│
+├── package.json         # Configuração raiz do monorepo
+├── turbo.json           # Configuração do Turborepo
+├── docker-compose.yaml  # MySQL container
+├── env.example          # Exemplo de variáveis de ambiente
+├── README.md
+└── API.md
+```
+
+## 🔧 Convenções de Código
+
+### TypeScript
+- **Sempre usar TypeScript** - evitar `any`, usar tipos explícitos
+- **Interfaces/Types**: Definir em `src/types/` (frontend) ou junto aos módulos (backend)
+- **Strict Mode**: Habilitado em ambos os projetos
+
+### Nomenclatura
+- **Arquivos**: kebab-case (ex: `auth.service.ts`, `task-card.tsx`)
+- **Componentes React**: PascalCase (ex: `TaskCard.tsx`)
+- **Classes/Interfaces**: PascalCase (ex: `AuthService`, `CreateTaskDto`)
+- **Variáveis/Funções**: camelCase (ex: `getUserTasks`, `isAuthenticated`)
+- **Constantes**: UPPER_SNAKE_CASE (ex: `JWT_SECRET`, `API_BASE_URL`)
+
+### Frontend (Next.js)
+- **App Router**: Usar App Router do Next.js 14+
+- **Server Components**: Preferir Server Components quando possível
+- **Client Components**: Marcar com `'use client'` quando necessário
+- **Componentes**: Criar componentes reutilizáveis em `src/components/`
+- **Hooks**: Custom hooks em `src/lib/hooks/`
+- **API Calls**: Criar funções em `src/lib/api/` para chamadas à API
+- **Validação**: Usar React Hook Form para formulários
+- **Estado**: TanStack Query para estado do servidor, useState/useReducer para estado local
+
+### Backend (NestJS)
+- **Módulos**: Um módulo por feature (auth, tasks, etc.)
+- **DTOs**: Sempre usar DTOs com class-validator para validação
+- **Services**: Lógica de negócio nos services
+- **Controllers**: Apenas roteamento e validação básica
+- **Guards**: Usar guards para autenticação/autorização
+- **Database**: Usar prepared statements (mysql2) para prevenir SQL injection
+- **Erros**: Usar exceções do NestJS (NotFoundException, UnauthorizedException, etc.)
+
+## 🔒 Segurança
+
+### Obrigatório
+- **Senhas**: Sempre hash com bcrypt (salt rounds: 10)
+- **JWT**: Tokens com expiração configurável (padrão: 24h)
+- **Validação**: Validar todos os inputs com class-validator (backend) e React Hook Form (frontend)
+- **SQL Injection**: Usar prepared statements (mysql2) - NUNCA concatenar strings SQL
+- **CORS**: Configurado para permitir apenas o frontend autorizado
+- **Variáveis Sensíveis**: Sempre usar `.env` - NUNCA commitar credenciais
+
+### Isolamento de Dados
+- Usuários só podem acessar suas próprias tarefas
+- Validar `user_id` em todas as operações de tarefas
+- Usar guards JWT em todas as rotas protegidas
+
+## 📝 Padrões de Desenvolvimento
+
+### Commits
+- Usar Conventional Commits
+- Exemplos:
+  - `feat: adiciona página de login`
+  - `fix: corrige validação de email`
+  - `refactor: reorganiza estrutura de componentes`
+  - `test: adiciona testes para auth service`
+
+### Testes
+- **Backend**: Testes obrigatórios para endpoints da API
+- **Cobertura mínima**: 60% dos endpoints
+- **Localização**: `apps/api/test/` ou `apps/api/src/**/*.spec.ts`
+- **Ferramentas**: Jest + Supertest
+- **Frontend**: Testes de componentes com React Testing Library (diferencial)
+
+### Formatação
+- **Prettier**: Configurado no projeto raiz
+- **ESLint**: Configurado em cada workspace
+- **Formatação automática**: Executar `pnpm format` antes de commitar
+- **Configuração**: `.prettierrc` e `.prettierignore` na raiz
+
+## 🗄️ Banco de Dados
+
+### Schema
+- **Arquivo**: `database/schema.sql`
+- **Tabelas**:
+  - `users`: id, name, email, password, created_at
+  - `tasks`: id, user_id, title, description, status, created_at, updated_at
+- **Índices**: Criados para otimização (email, user_id, status)
+- **Foreign Keys**: user_id referencia users(id) ON DELETE CASCADE
+
+### Conexão
+- **Módulo**: `apps/api/src/database/database.module.ts`
+- **Provider**: `DATABASE_CONNECTION` injetado via dependency injection
+- **Configuração**: Via variáveis de ambiente (DB_HOST, DB_PORT, etc.)
+
+## 🌐 API Endpoints
+
+### Autenticação
+- `POST /auth/register` - Registro de usuários
+- `POST /auth/login` - Login e obtenção de JWT
+
+### Tarefas (Protegidas)
+- `GET /tasks` - Listar tarefas do usuário
+- `POST /tasks` - Criar nova tarefa
+- `PUT /tasks/:id` - Atualizar tarefa
+- `DELETE /tasks/:id` - Deletar tarefa
+
+### Documentação
+- Ver `API.md` para documentação completa dos endpoints
+
+## 🔄 Fluxo de Desenvolvimento
+
+### 1. Configuração Inicial
+```bash
+# IMPORTANTE: Usar pnpm (não npm ou yarn)
+# Instalar dependências
+pnpm install
+
+# Configurar banco de dados
+docker-compose up -d
+# ou
+mysql -u root -p < database/schema.sql
+
+# Configurar variáveis de ambiente
+cp env.example .env
+# Editar .env com credenciais
+```
+
+### 2. Desenvolvimento
+```bash
+# Executar tudo (via Turborepo)
+pnpm dev
+
+# Executar apenas frontend
+cd apps/web && pnpm dev
+
+# Executar apenas backend
+cd apps/api && pnpm dev
+
+# Build de tudo
+pnpm build
+```
+
+### 3. Testes
+```bash
+# Todos os testes
+pnpm test
+
+# Backend apenas
+cd apps/api && pnpm test
+
+# Frontend apenas
+cd apps/web && pnpm test
+```
+
+## 📦 Variáveis de Ambiente
+
+### Raiz (.env)
+```env
+PORT=3001
+NODE_ENV=development
+NEXT_PUBLIC_API_URL=http://localhost:3001
+FRONTEND_URL=http://localhost:3000
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=your_password
+DB_NAME=task_manager
+JWT_SECRET=your_super_secret_jwt_key
+JWT_EXPIRES_IN=24h
+```
+
+## 🎯 Decisões Técnicas Importantes
+
+### Por que Monorepo?
+- Compartilhamento de código entre frontend e backend
+- Builds otimizados com cache do Turborepo
+- Gerenciamento simplificado de dependências
+- Facilita CI/CD
+
+### Por que NestJS ao invés de Next.js API Routes?
+- Arquitetura modular e escalável
+- Melhor separação de responsabilidades
+- Suporte nativo a TypeScript
+- Ecossistema robusto para APIs REST
+- Facilita testes e manutenção
+
+### Por que Next.js App Router?
+- Melhor performance e SEO
+- Server Components por padrão
+- Roteamento baseado em arquivos simplificado
+- Suporte nativo a layouts e loading states
+
+### Por que pnpm?
+- Mais rápido que npm/yarn
+- Melhor gerenciamento de espaço em disco
+- Suporte nativo a workspaces
+- Compatível com Turborepo
+
+## 🚫 O Que NÃO Fazer
+
+- ❌ Commitar arquivos `.env` com credenciais reais
+- ❌ Armazenar senhas em texto plano
+- ❌ Concatenar strings SQL (usar prepared statements)
+- ❌ Deixar endpoints sem autenticação quando necessário
+- ❌ Usar `any` no TypeScript sem necessidade
+- ❌ Ignorar tratamento de erros
+- ❌ Criar componentes muito grandes (dividir em menores)
+- ❌ Hardcode de valores (usar variáveis de ambiente)
+
+## ✅ Checklist de Qualidade
+
+Antes de commitar, verificar:
+- [ ] Código formatado com Prettier
+- [ ] Sem erros de lint
+- [ ] TypeScript sem erros
+- [ ] Testes passando
+- [ ] Variáveis de ambiente não commitadas
+- [ ] Commits com mensagens descritivas
+- [ ] Código segue as convenções do projeto
+
+## 📚 Recursos Úteis
+
+- [Next.js Docs](https://nextjs.org/docs)
+- [NestJS Docs](https://docs.nestjs.com)
+- [Turborepo Docs](https://turbo.build/repo/docs)
+- [Tailwind CSS Docs](https://tailwindcss.com/docs)
+- [JWT.io](https://jwt.io/)
+- [MySQL Docs](https://dev.mysql.com/doc/)
+
+## 🎨 Padrões de UI/UX
+
+### Frontend
+- **Responsividade**: Mobile-first com Tailwind CSS
+- **Loading States**: Sempre mostrar indicadores de loading
+- **Error Handling**: Mensagens de erro claras e amigáveis
+- **Validação**: Validação em tempo real nos formulários
+- **Feedback Visual**: Feedback imediato para ações do usuário
+
+### Cores e Estilo
+- Usar classes Tailwind CSS
+- Manter consistência visual
+- Seguir design system quando aplicável
+
+---
+
+**Última atualização**: Estrutura inicial do monorepo com Turborepo, Next.js e NestJS configurados.
+
