@@ -1,3 +1,6 @@
+/**
+ * @jest-environment node
+ */
 import { GET, POST } from '@/app/api/tasks/route';
 import { PUT, DELETE } from '@/app/api/tasks/[id]/route';
 import { NextRequest, NextResponse } from 'next/server';
@@ -12,6 +15,7 @@ jest.mock('@/lib/db', () => ({
       create: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
+      count: jest.fn(),
     },
   },
 }));
@@ -137,6 +141,170 @@ describe('Tasks API Routes', () => {
         where: { user_id: 1 },
         orderBy: { created_at: 'desc' },
       });
+    });
+
+    it('deve retornar tarefas com paginação', async () => {
+      const mockTasks = Array.from({ length: 5 }, (_, i) => ({
+        id: i + 1,
+        user_id: 1,
+        title: `Tarefa ${i + 1}`,
+        description: 'Descrição',
+        status: TaskStatus.PENDING,
+        created_at: new Date(),
+        updated_at: new Date(),
+      }));
+
+      (prisma.task.findMany as jest.Mock).mockResolvedValue(mockTasks);
+      (prisma.task.count as jest.Mock).mockResolvedValue(15);
+
+      const request = new NextRequest('http://localhost:3000/api/tasks?page=1&limit=5', {
+        method: 'GET',
+        headers: {
+          authorization: 'Bearer token',
+        },
+      });
+
+      const response = await GET(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.tasks).toHaveLength(5);
+      expect(data.pagination).toEqual({
+        page: 1,
+        limit: 5,
+        total: 15,
+        totalPages: 3,
+        hasNextPage: true,
+        hasPrevPage: false,
+      });
+      expect(prisma.task.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          skip: 0,
+          take: 5,
+        })
+      );
+    });
+
+    it('deve filtrar tarefas por status', async () => {
+      const mockTasks = [
+        {
+          id: 1,
+          user_id: 1,
+          title: 'Tarefa Pendente',
+          description: 'Descrição',
+          status: TaskStatus.PENDING,
+          created_at: new Date(),
+          updated_at: new Date(),
+        },
+      ];
+
+      (prisma.task.findMany as jest.Mock).mockResolvedValue(mockTasks);
+      (prisma.task.count as jest.Mock).mockResolvedValue(1);
+
+      const request = new NextRequest('http://localhost:3000/api/tasks?status=PENDING', {
+        method: 'GET',
+        headers: {
+          authorization: 'Bearer token',
+        },
+      });
+
+      const response = await GET(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.tasks).toHaveLength(1);
+      expect(data.tasks[0].status).toBe(TaskStatus.PENDING);
+      expect(prisma.task.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            status: TaskStatus.PENDING,
+          }),
+        })
+      );
+    });
+
+    it('deve buscar tarefas por texto', async () => {
+      const mockTasks = [
+        {
+          id: 1,
+          user_id: 1,
+          title: 'Tarefa de Busca',
+          description: 'Descrição da busca',
+          status: TaskStatus.PENDING,
+          created_at: new Date(),
+          updated_at: new Date(),
+        },
+      ];
+
+      (prisma.task.findMany as jest.Mock).mockResolvedValue(mockTasks);
+      (prisma.task.count as jest.Mock).mockResolvedValue(1);
+
+      const request = new NextRequest('http://localhost:3000/api/tasks?search=Busca', {
+        method: 'GET',
+        headers: {
+          authorization: 'Bearer token',
+        },
+      });
+
+      const response = await GET(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.tasks).toHaveLength(1);
+      expect(prisma.task.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            OR: expect.arrayContaining([
+              expect.objectContaining({
+                title: expect.objectContaining({
+                  contains: 'Busca',
+                }),
+              }),
+              expect.objectContaining({
+                description: expect.objectContaining({
+                  contains: 'Busca',
+                }),
+              }),
+            ]),
+          }),
+        })
+      );
+    });
+
+    it('deve ordenar tarefas por diferentes campos', async () => {
+      const mockTasks = [
+        {
+          id: 1,
+          user_id: 1,
+          title: 'A Tarefa',
+          description: 'Descrição',
+          status: TaskStatus.PENDING,
+          created_at: new Date(),
+          updated_at: new Date(),
+        },
+      ];
+
+      (prisma.task.findMany as jest.Mock).mockResolvedValue(mockTasks);
+      (prisma.task.count as jest.Mock).mockResolvedValue(1);
+
+      const request = new NextRequest('http://localhost:3000/api/tasks?sortBy=title&sortOrder=asc', {
+        method: 'GET',
+        headers: {
+          authorization: 'Bearer token',
+        },
+      });
+
+      const response = await GET(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(prisma.task.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: {
+            title: 'asc',
+          },
+        })
+      );
     });
   });
 
