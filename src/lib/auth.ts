@@ -4,7 +4,9 @@ import { prisma } from './db';
 import { JwtPayload, RegisterDto, LoginDto } from '@/types';
 
 const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '15m'; // Access token expira em 15 minutos
+const JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || '7d'; // Refresh token expira em 7 dias
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET;
 
 if (!JWT_SECRET) {
   throw new Error('JWT_SECRET não está configurado nas variáveis de ambiente');
@@ -12,6 +14,7 @@ if (!JWT_SECRET) {
 
 // Garantir que JWT_SECRET não é undefined para TypeScript
 const JWT_SECRET_STRING: string = JWT_SECRET;
+const JWT_REFRESH_SECRET_STRING: string = JWT_REFRESH_SECRET || JWT_SECRET_STRING;
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 10);
@@ -27,12 +30,27 @@ export function generateToken(payload: JwtPayload): string {
   } as jwt.SignOptions);
 }
 
+export function generateRefreshToken(userId: number): string {
+  return jwt.sign({ sub: userId }, JWT_REFRESH_SECRET_STRING, {
+    expiresIn: JWT_REFRESH_EXPIRES_IN,
+  } as jwt.SignOptions);
+}
+
 export function verifyToken(token: string): JwtPayload {
   try {
     const decoded = jwt.verify(token, JWT_SECRET_STRING);
     return decoded as unknown as JwtPayload;
   } catch (error) {
     throw new Error('Token inválido');
+  }
+}
+
+export function verifyRefreshToken(token: string): { sub: number } {
+  try {
+    const decoded = jwt.verify(token, JWT_REFRESH_SECRET_STRING);
+    return decoded as unknown as { sub: number };
+  } catch (error) {
+    throw new Error('Refresh token inválido');
   }
 }
 
@@ -107,16 +125,41 @@ export async function login(loginDto: LoginDto) {
     },
   });
 
-  // Gerar token JWT com token_version
+  // Gerar access token JWT com token_version
   const payload: JwtPayload = {
     sub: user.id,
     email: user.email,
     tokenVersion: updatedUser.token_version,
   };
-  const token = generateToken(payload);
+  const accessToken = generateToken(payload);
+  const refreshToken = generateRefreshToken(user.id);
+
+  // Calcular data de expiração do refresh token (7 dias)
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + 7);
+
+  // Salvar refresh token no banco de dados
+  await prisma.refreshToken.create({
+    data: {
+      token: refreshToken,
+      user_id: user.id,
+      expires_at: expiresAt,
+    },
+  });
+
+  // Limpar refresh tokens expirados do usuário
+  await prisma.refreshToken.deleteMany({
+    where: {
+      user_id: user.id,
+      expires_at: {
+        lt: new Date(),
+      },
+    },
+  });
 
   return {
-    token,
+    accessToken,
+    refreshToken,
     user: {
       id: user.id,
       name: user.name,
@@ -171,4 +214,62 @@ export async function validateTokenAndGetUser(token: string) {
   }
 
   return { userId: user.id, email: user.email, name: user.name };
+}
+
+export async function refreshAccessToken(refreshToken: string) {
+  // Verificar se o refresh token é válido
+  const payload = verifyRefreshToken(refreshToken);
+
+  // Verificar se o refresh token existe no banco e não está expirado
+  const storedToken = await prisma.refreshToken.findUnique({
+    where: { token: refreshToken },
+    include: { user: true },
+  });
+
+  if (!storedToken) {
+    throw new Error('Refresh token não encontrado');
+  }
+
+  if (storedToken.expires_at < new Date()) {
+    // Remover token expirado
+    await prisma.refreshToken.delete({
+      where: { token: refreshToken },
+    });
+    throw new Error('Refresh token expirado');
+  }
+
+  if (storedToken.user_id !== payload.sub) {
+    throw new Error('Refresh token inválido');
+  }
+
+  const user = storedToken.user;
+
+  // Gerar novo access token
+  const newPayload: JwtPayload = {
+    sub: user.id,
+    email: user.email,
+    tokenVersion: user.token_version,
+  };
+  const newAccessToken = generateToken(newPayload);
+
+  return {
+    accessToken: newAccessToken,
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+    },
+  };
+}
+
+export async function revokeRefreshToken(refreshToken: string) {
+  await prisma.refreshToken.deleteMany({
+    where: { token: refreshToken },
+  });
+}
+
+export async function revokeAllUserRefreshTokens(userId: number) {
+  await prisma.refreshToken.deleteMany({
+    where: { user_id: userId },
+  });
 }
