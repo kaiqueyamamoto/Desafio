@@ -2,138 +2,100 @@
 
 ## 📋 Contexto do Projeto
 
-Este é um sistema completo de gestão de tarefas desenvolvido como desafio técnico para a Hubfy.ai. O projeto utiliza uma arquitetura de **monorepo** com **Turborepo**, separando frontend (Next.js) e backend (NestJS) em workspaces independentes.
+Este é um sistema completo de gestão de tarefas desenvolvido como desafio técnico para a Hubfy.ai. O projeto utiliza **Next.js 14+ full stack** com App Router, integrando frontend e backend em uma única aplicação.
 
 ## 🏗️ Arquitetura
 
-### Estrutura do Monorepo
-- **Gerenciador de Pacotes**: pnpm 8.15.0+ (obrigatório)
-- **Orquestração**: Turborepo 2.0+
-- **Workspaces**: Configurados automaticamente pelo pnpm
-  - `apps/web` - Frontend Next.js
-  - `apps/api` - Backend NestJS
-  - `packages/` - Pacotes compartilhados (futuro)
-- **Scripts do Turborepo**:
-  - `dev`: Modo desenvolvimento (cache desabilitado, persistente)
-  - `build`: Build com dependências entre workspaces
-  - `test`: Testes com dependência de build
-  - `lint`: Linting com dependências entre workspaces
-  - `clean`: Limpeza sem cache
-
-### Frontend (apps/web)
+### Estrutura do Projeto
 - **Framework**: Next.js 14+ com App Router
-- **React**: 18+
-- **TypeScript**: 5.3+
+- **Gerenciador de Pacotes**: pnpm (recomendado) ou npm
+- **Banco de Dados**: MySQL 8+ via Prisma ORM
+- **Autenticação**: JWT (jsonwebtoken)
+- **Validação**: Zod (backend e frontend)
+- **Formulários**: React Hook Form com validação Zod
+- **Estado do Servidor**: TanStack Query (React Query)
 - **Styling**: Tailwind CSS 3.4+
-- **Estrutura**:
-  - `src/app/` - Páginas e rotas (App Router)
-  - `src/components/` - Componentes React reutilizáveis
-  - `src/lib/` - Utilitários e helpers
-  - `src/types/` - Definições TypeScript
 
-### Backend (apps/api)
-- **Framework**: NestJS 10+
-- **TypeScript**: 5.3+
-- **Banco de Dados**: MySQL 8+ (mysql2)
-- **Autenticação**: JWT (@nestjs/jwt)
-- **Validação**: class-validator
-- **Hash de Senhas**: bcrypt
-- **Estrutura Modular**:
-  - `src/auth/` - Módulo de autenticação
-  - `src/tasks/` - Módulo de tarefas
-  - `src/database/` - Configuração do banco
-  - `src/common/` - Guards, decorators, interceptors
+### Estrutura de Pastas
+```
+projeto/
+├── src/
+│   ├── app/
+│   │   ├── api/                    # Next.js API Routes
+│   │   │   ├── auth/
+│   │   │   │   ├── login/route.ts
+│   │   │   │   └── register/route.ts
+│   │   │   └── tasks/
+│   │   │       ├── route.ts       # GET e POST
+│   │   │       └── [id]/route.ts  # PUT e DELETE
+│   │   ├── login/page.tsx
+│   │   ├── register/page.tsx
+│   │   ├── dashboard/page.tsx
+│   │   ├── layout.tsx
+│   │   ├── page.tsx
+│   │   └── globals.css
+│   ├── components/                 # Componentes React reutilizáveis
+│   ├── lib/
+│   │   ├── db.ts                   # Prisma Client singleton
+│   │   ├── auth.ts                 # Funções de autenticação
+│   │   ├── middleware.ts           # Middleware de autenticação
+│   │   ├── api/                    # Funções de chamada à API
+│   │   │   ├── auth.ts
+│   │   │   └── tasks.ts
+│   │   ├── hooks/                  # Custom hooks
+│   │   │   ├── use-auth.ts
+│   │   │   └── use-tasks.ts
+│   │   ├── providers/              # Providers React
+│   │   │   └── query-provider.tsx
+│   │   └── schemas/                 # Schemas Zod
+│   │       └── auth.schema.ts
+│   └── types/                       # Tipos TypeScript compartilhados
+│       └── index.ts
+├── tests/
+│   ├── api/                         # Testes de API Routes
+│   │   ├── auth.test.ts
+│   │   └── tasks.test.ts
+│   └── components/                  # Testes de componentes
+├── prisma/
+│   └── schema.prisma               # Schema do Prisma
+├── database/
+│   └── schema.sql                   # Schema SQL (referência)
+├── .env.example
+├── README.md
+├── API.md
+├── package.json
+├── tsconfig.json
+├── next.config.js
+├── tailwind.config.ts
+├── jest.config.js
+└── jest.setup.js
+```
 
 ## 🛠️ Stack Tecnológica
 
-### Frontend
-- Next.js 14+ (App Router)
-- React 18+
-- TypeScript
-- Tailwind CSS
-- React Hook Form (diferencial - usar quando apropriado)
-- TanStack Query (diferencial - para gerenciamento de estado e cache)
-
-### Backend
-- NestJS 10+
-- TypeScript
-- MySQL 8+ (mysql2 - prepared statements)
-- JWT (@nestjs/jwt)
-- bcrypt (hash de senhas)
-- class-validator (validação de DTOs)
-- Prisma ou Drizzle (diferencial - considerar ORM)
+### Frontend & Backend (Full Stack Next.js)
+- **Next.js 14+** (App Router)
+- **React 18+**
+- **TypeScript 5.3+**
+- **Prisma ORM** (MySQL)
+- **Zod** (validação)
+- **React Hook Form** (formulários)
+- **TanStack Query** (gerenciamento de estado e cache)
+- **Tailwind CSS** (styling)
+- **bcrypt** (hash de senhas)
+- **jsonwebtoken** (autenticação JWT)
 
 ### DevOps & Ferramentas
-- Turborepo (monorepo)
-- Jest (testes)
-- ESLint (linting)
-- Prettier (formatação)
-
-## 📁 Estrutura de Pastas
-
-```
-desafio/
-├── apps/
-│   ├── web/              # Frontend Next.js
-│   │   ├── src/
-│   │   │   ├── app/      # Páginas (App Router)
-│   │   │   │   ├── login/
-│   │   │   │   ├── register/
-│   │   │   │   ├── dashboard/
-│   │   │   │   ├── layout.tsx
-│   │   │   │   └── page.tsx
-│   │   │   ├── components/  # Componentes React
-│   │   │   ├── lib/        # Utilitários
-│   │   │   └── types/      # Tipos TypeScript
-│   │   ├── package.json
-│   │   ├── next.config.js
-│   │   ├── tailwind.config.ts
-│   │   └── tsconfig.json
-│   │
-│   └── api/              # Backend NestJS
-│       ├── src/
-│       │   ├── auth/     # Módulo de autenticação
-│       │   │   ├── auth.module.ts
-│       │   │   ├── auth.controller.ts
-│       │   │   ├── auth.service.ts
-│       │   │   ├── dto/
-│       │   │   └── strategies/
-│       │   ├── tasks/    # Módulo de tarefas
-│       │   │   ├── tasks.module.ts
-│       │   │   ├── tasks.controller.ts
-│       │   │   ├── tasks.service.ts
-│       │   │   └── dto/
-│       │   ├── database/ # Configuração do banco
-│       │   │   └── database.module.ts
-│       │   ├── common/   # Recursos compartilhados
-│       │   │   ├── guards/
-│       │   │   ├── decorators/
-│       │   │   └── interceptors/
-│       │   ├── app.module.ts
-│       │   └── main.ts
-│       ├── package.json
-│       ├── nest-cli.json
-│       └── tsconfig.json
-│
-├── database/
-│   └── schema.sql        # Schema do banco de dados MySQL
-│
-├── packages/             # Pacotes compartilhados (futuro)
-│
-├── package.json         # Configuração raiz do monorepo
-├── turbo.json           # Configuração do Turborepo
-├── docker-compose.yaml  # MySQL container
-├── env.example          # Exemplo de variáveis de ambiente
-├── README.md
-└── API.md
-```
+- **Jest** (testes)
+- **ESLint** (linting)
+- **Prettier** (formatação)
 
 ## 🔧 Convenções de Código
 
 ### TypeScript
 - **Sempre usar TypeScript** - evitar `any`, usar tipos explícitos
-- **Interfaces/Types**: Definir em `src/types/` (frontend) ou junto aos módulos (backend)
-- **Strict Mode**: Habilitado em ambos os projetos
+- **Interfaces/Types**: Definir em `src/types/index.ts`
+- **Strict Mode**: Habilitado
 
 ### Nomenclatura
 - **Arquivos**: kebab-case (ex: `auth.service.ts`, `task-card.tsx`)
@@ -142,39 +104,39 @@ desafio/
 - **Variáveis/Funções**: camelCase (ex: `getUserTasks`, `isAuthenticated`)
 - **Constantes**: UPPER_SNAKE_CASE (ex: `JWT_SECRET`, `API_BASE_URL`)
 
-### Frontend (Next.js)
-- **App Router**: Usar App Router do Next.js 14+
+### Next.js App Router
+- **API Routes**: Criar em `src/app/api/` seguindo a estrutura de pastas
 - **Server Components**: Preferir Server Components quando possível
-- **Client Components**: Marcar com `'use client'` quando necessário
+- **Client Components**: Sempre marcar com `'use client'` quando necessário
 - **Componentes**: Criar componentes reutilizáveis em `src/components/`
-- **Hooks**: Custom hooks em `src/lib/hooks/`
+- **Hooks Customizados**: Criar em `src/lib/hooks/`
 - **API Calls**: Criar funções em `src/lib/api/` para chamadas à API
-- **Validação**: Usar React Hook Form para formulários
-- **Estado**: TanStack Query para estado do servidor, useState/useReducer para estado local
+- **Validação**: Usar Zod para validação de dados (backend e frontend)
+- **Formulários**: Sempre usar React Hook Form com validação Zod
+- **Estado do Servidor**: Usar TanStack Query para dados do servidor
+- **Estado Local**: Usar useState/useReducer apenas para estado UI local
 
-### Backend (NestJS)
-- **Módulos**: Um módulo por feature (auth, tasks, etc.)
-- **DTOs**: Sempre usar DTOs com class-validator para validação
-- **Services**: Lógica de negócio nos services
-- **Controllers**: Apenas roteamento e validação básica
-- **Guards**: Usar guards para autenticação/autorização
-- **Database**: Usar prepared statements (mysql2) para prevenir SQL injection
-- **Erros**: Usar exceções do NestJS (NotFoundException, UnauthorizedException, etc.)
+### Arquitetura em Camadas
+- **API Routes** (`src/app/api/`): Controllers - apenas roteamento e validação
+- **Lib Services** (`src/lib/`): Lógica de negócio (auth.ts, etc.)
+- **Prisma** (`src/lib/db.ts`): Camada de dados (ORM)
+- **Hooks** (`src/lib/hooks/`): Abstração de lógica reutilizável
+- **Types** (`src/types/`): Definições de tipos compartilhados
 
 ## 🔒 Segurança
 
 ### Obrigatório
 - **Senhas**: Sempre hash com bcrypt (salt rounds: 10)
-- **JWT**: Tokens com expiração configurável (padrão: 24h)
-- **Validação**: Validar todos os inputs com class-validator (backend) e React Hook Form (frontend)
-- **SQL Injection**: Usar prepared statements (mysql2) - NUNCA concatenar strings SQL
-- **CORS**: Configurado para permitir apenas o frontend autorizado
+- **JWT**: Tokens com expiração configurável (padrão: 24h) e token_version
+- **Validação**: Validar todos os inputs com Zod (backend e frontend)
+- **SQL Injection**: Usar Prisma ORM - NUNCA SQL raw sem sanitização
 - **Variáveis Sensíveis**: Sempre usar `.env` - NUNCA commitar credenciais
+- **Autenticação**: Proteger todas as rotas de API que precisam autenticação
 
 ### Isolamento de Dados
 - Usuários só podem acessar suas próprias tarefas
 - Validar `user_id` em todas as operações de tarefas
-- Usar guards JWT em todas as rotas protegidas
+- Usar middleware de autenticação em todas as rotas protegidas
 
 ## 📝 Padrões de Desenvolvimento
 
@@ -186,53 +148,52 @@ desafio/
   - `feat: adiciona página de login`
   - `fix: corrige validação de email`
   - `refactor: reorganiza estrutura de componentes`
-  - `test: adiciona testes para auth service`
-  - `docs: adiciona decorators Swagger no AuthController`
+  - `test: adiciona testes para auth routes`
+  - `docs: atualiza documentação da API`
 - **Regra de Commits Separados**:
   - Se você modificar múltiplos arquivos, criar um commit para cada arquivo
   - Se criar novos arquivos, cada arquivo novo deve ter seu próprio commit
   - Commits devem ser atômicos e focados em uma única mudança
-  - Exemplo: Se você adicionar Swagger em 5 arquivos, fazer 5 commits separados
+  - Exemplo: Se você adicionar validação em 5 arquivos, fazer 5 commits separados
 
 ### Testes
-- **Backend**: Testes obrigatórios para endpoints da API
+- **API Routes**: Testes obrigatórios para endpoints da API
 - **Cobertura mínima**: 60% dos endpoints
-- **Localização**: `apps/api/test/` ou `apps/api/src/**/*.spec.ts`
-- **Ferramentas**: Jest + Supertest
-- **Frontend**: Testes de componentes com React Testing Library (diferencial)
+- **Localização**: `tests/api/`
+- **Ferramentas**: Jest + React Testing Library
+- **Frontend**: Testes de componentes com React Testing Library
 
 ### Formatação
-- **Prettier**: Configurado no projeto raiz
-- **ESLint**: Configurado em cada workspace
+- **Prettier**: Configurado no projeto
+- **ESLint**: Configurado para Next.js
 - **Formatação automática**: Executar `pnpm format` antes de commitar
 - **Configuração**: `.prettierrc` e `.prettierignore` na raiz
 
 ## 🗄️ Banco de Dados
 
 ### Schema
-- **Arquivo**: `database/schema.sql`
+- **ORM**: Prisma (`prisma/schema.prisma`)
 - **Tabelas**:
-  - `users`: id, name, email, password, created_at
+  - `users`: id, name, email, password, token_version, created_at
   - `tasks`: id, user_id, title, description, status, created_at, updated_at
 - **Índices**: Criados para otimização (email, user_id, status)
 - **Foreign Keys**: user_id referencia users(id) ON DELETE CASCADE
 
 ### Conexão
-- **Módulo**: `apps/api/src/database/database.module.ts`
-- **Provider**: `DATABASE_CONNECTION` injetado via dependency injection
-- **Configuração**: Via variáveis de ambiente (DB_HOST, DB_PORT, etc.)
+- **Prisma Client**: `src/lib/db.ts` (singleton pattern)
+- **Configuração**: Via variáveis de ambiente (DATABASE_URL)
 
 ## 🌐 API Endpoints
 
 ### Autenticação
-- `POST /auth/register` - Registro de usuários
-- `POST /auth/login` - Login e obtenção de JWT
+- `POST /api/auth/register` - Registro de usuários
+- `POST /api/auth/login` - Login e obtenção de JWT
 
 ### Tarefas (Protegidas)
-- `GET /tasks` - Listar tarefas do usuário
-- `POST /tasks` - Criar nova tarefa
-- `PUT /tasks/:id` - Atualizar tarefa
-- `DELETE /tasks/:id` - Deletar tarefa
+- `GET /api/tasks` - Listar tarefas do usuário
+- `POST /api/tasks` - Criar nova tarefa
+- `PUT /api/tasks/:id` - Atualizar tarefa
+- `DELETE /api/tasks/:id` - Deletar tarefa
 
 ### Documentação
 - Ver `API.md` para documentação completa dos endpoints
@@ -241,33 +202,35 @@ desafio/
 
 ### 1. Configuração Inicial
 ```bash
-# IMPORTANTE: Usar pnpm (não npm ou yarn)
 # Instalar dependências
 pnpm install
+
+# Gerar Prisma Client
+pnpm prisma generate
 
 # Configurar banco de dados
 docker-compose up -d
 # ou
 mysql -u root -p < database/schema.sql
 
+# Executar migrações Prisma (se necessário)
+pnpm prisma migrate dev
+
 # Configurar variáveis de ambiente
-cp env.example .env
+cp .env.example .env
 # Editar .env com credenciais
 ```
 
 ### 2. Desenvolvimento
 ```bash
-# Executar tudo (via Turborepo)
+# Executar servidor de desenvolvimento
 pnpm dev
 
-# Executar apenas frontend
-cd apps/web && pnpm dev
-
-# Executar apenas backend
-cd apps/api && pnpm dev
-
-# Build de tudo
+# Build de produção
 pnpm build
+
+# Executar produção
+pnpm start
 ```
 
 ### 3. Testes
@@ -275,67 +238,86 @@ pnpm build
 # Todos os testes
 pnpm test
 
-# Backend apenas
-cd apps/api && pnpm test
+# Testes em modo watch
+pnpm test:watch
 
-# Frontend apenas
-cd apps/web && pnpm test
+# Cobertura de testes
+pnpm test:cov
+```
+
+### 4. Prisma
+```bash
+# Gerar Prisma Client
+pnpm prisma generate
+
+# Criar migração
+pnpm prisma migrate dev
+
+# Abrir Prisma Studio
+pnpm prisma studio
+
+# Push schema (desenvolvimento)
+pnpm db:push
 ```
 
 ## 📦 Variáveis de Ambiente
 
-### Raiz (.env)
+### .env
 ```env
-PORT=3001
+# Next.js
 NODE_ENV=development
-NEXT_PUBLIC_API_URL=http://localhost:3001
-FRONTEND_URL=http://localhost:3000
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=your_password
-DB_NAME=task_manager
-JWT_SECRET=your_super_secret_jwt_key
+PORT=3000
+
+# Database (Prisma)
+DATABASE_URL="mysql://root:root@localhost:3306/task_manager"
+
+# JWT
+JWT_SECRET=your_super_secret_jwt_key_change_in_production
 JWT_EXPIRES_IN=24h
 ```
 
 ## 🎯 Decisões Técnicas Importantes
 
-### Por que Monorepo?
-- Compartilhamento de código entre frontend e backend
-- Builds otimizados com cache do Turborepo
-- Gerenciamento simplificado de dependências
-- Facilita CI/CD
+### Por que Next.js Full Stack?
+- Arquitetura unificada simplifica desenvolvimento
+- API Routes integradas com App Router
+- Server Components para melhor performance
+- Deploy simplificado (uma única aplicação)
+- Compartilhamento de tipos entre frontend e backend
 
-### Por que NestJS ao invés de Next.js API Routes?
-- Arquitetura modular e escalável
-- Melhor separação de responsabilidades
-- Suporte nativo a TypeScript
-- Ecossistema robusto para APIs REST
-- Facilita testes e manutenção
+### Por que Prisma?
+- Type-safe queries
+- Migrations automáticas
+- Geração automática de tipos TypeScript
+- Melhor DX (Developer Experience)
+- Suporte a múltiplos bancos de dados
 
-### Por que Next.js App Router?
-- Melhor performance e SEO
-- Server Components por padrão
-- Roteamento baseado em arquivos simplificado
-- Suporte nativo a layouts e loading states
+### Por que React Hook Form?
+- Performance otimizada (menos re-renders)
+- Validação integrada com Zod
+- Melhor UX (validação em tempo real)
+- Menos código boilerplate
 
-### Por que pnpm?
-- Mais rápido que npm/yarn
-- Melhor gerenciamento de espaço em disco
-- Suporte nativo a workspaces
-- Compatível com Turborepo
+### Por que TanStack Query?
+- Cache automático de requisições
+- Sincronização de estado do servidor
+- Refetch automático
+- Otimistic updates
+- Melhor gerenciamento de loading/error states
 
 ## 🚫 O Que NÃO Fazer
 
 - ❌ Commitar arquivos `.env` com credenciais reais
 - ❌ Armazenar senhas em texto plano
-- ❌ Concatenar strings SQL (usar prepared statements)
+- ❌ Usar SQL raw sem sanitização (usar Prisma)
 - ❌ Deixar endpoints sem autenticação quando necessário
 - ❌ Usar `any` no TypeScript sem necessidade
 - ❌ Ignorar tratamento de erros
 - ❌ Criar componentes muito grandes (dividir em menores)
 - ❌ Hardcode de valores (usar variáveis de ambiente)
+- ❌ Misturar lógica de negócio nas API Routes (usar lib/)
+- ❌ Criar formulários sem React Hook Form
+- ❌ Fazer chamadas diretas à API sem TanStack Query
 
 ## ✅ Checklist de Qualidade
 
@@ -347,15 +329,19 @@ Antes de commitar, verificar:
 - [ ] Variáveis de ambiente não commitadas
 - [ ] Commits com mensagens descritivas
 - [ ] Código segue as convenções do projeto
+- [ ] Formulários usam React Hook Form
+- [ ] Chamadas à API usam TanStack Query
+- [ ] Validação com Zod implementada
 
 ## 📚 Recursos Úteis
 
 - [Next.js Docs](https://nextjs.org/docs)
-- [NestJS Docs](https://docs.nestjs.com)
-- [Turborepo Docs](https://turbo.build/repo/docs)
+- [Prisma Docs](https://www.prisma.io/docs)
+- [React Hook Form Docs](https://react-hook-form.com/)
+- [TanStack Query Docs](https://tanstack.com/query/latest)
+- [Zod Docs](https://zod.dev/)
 - [Tailwind CSS Docs](https://tailwindcss.com/docs)
 - [JWT.io](https://jwt.io/)
-- [MySQL Docs](https://dev.mysql.com/doc/)
 
 ## 🎨 Padrões de UI/UX
 
@@ -363,15 +349,83 @@ Antes de commitar, verificar:
 - **Responsividade**: Mobile-first com Tailwind CSS
 - **Loading States**: Sempre mostrar indicadores de loading
 - **Error Handling**: Mensagens de erro claras e amigáveis
-- **Validação**: Validação em tempo real nos formulários
+- **Validação**: Validação em tempo real nos formulários (React Hook Form + Zod)
 - **Feedback Visual**: Feedback imediato para ações do usuário
+- **TanStack Query**: Usar estados isLoading, isError, isSuccess para UI
 
 ### Cores e Estilo
 - Usar classes Tailwind CSS
 - Manter consistência visual
 - Seguir design system quando aplicável
 
+## 🔄 Padrões de Código
+
+### API Routes
+```typescript
+// src/app/api/example/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { authenticateRequest } from '@/lib/middleware';
+
+const schema = z.object({
+  // schema definition
+});
+
+export async function GET(request: NextRequest) {
+  const authResult = await authenticateRequest(request);
+  if (authResult instanceof NextResponse) return authResult;
+  
+  // lógica
+  return NextResponse.json({ data });
+}
+```
+
+### React Hook Form
+```typescript
+// src/app/example/page.tsx
+'use client';
+
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { schema, FormData } from '@/lib/schemas/example.schema';
+
+export default function ExamplePage() {
+  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
+    resolver: zodResolver(schema),
+  });
+
+  const onSubmit = (data: FormData) => {
+    // handle submit
+  };
+
+  return <form onSubmit={handleSubmit(onSubmit)}>...</form>;
+}
+```
+
+### TanStack Query
+```typescript
+// src/lib/hooks/use-example.ts
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getData, createData } from '@/lib/api/example';
+
+export function useData() {
+  return useQuery({
+    queryKey: ['data'],
+    queryFn: getData,
+  });
+}
+
+export function useCreateData() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createData,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['data'] });
+    },
+  });
+}
+```
+
 ---
 
-**Última atualização**: Estrutura inicial do monorepo com Turborepo, Next.js e NestJS configurados.
-
+**Última atualização**: Projeto refatorado para Next.js full stack com React Hook Form e TanStack Query.
