@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+import * as jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import { prisma } from './db';
 import { JwtPayload, RegisterDto, LoginDto } from '@/types';
