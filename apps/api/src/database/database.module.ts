@@ -12,9 +12,11 @@ import { Task } from '../entities/task.entity';
       useFactory: (configService: ConfigService) => {
         const logger = new Logger('DatabaseModule');
         const password = configService.get<string>('DB_PASSWORD');
-        
+
         if (password === undefined || password === null) {
-          logger.error('❌ ERRO: DB_PASSWORD não está definida no arquivo .env');
+          logger.error(
+            '❌ ERRO: DB_PASSWORD não está definida no arquivo .env'
+          );
           logger.error('   Por favor, defina DB_PASSWORD no arquivo .env');
           logger.error('   Exemplo: DB_PASSWORD=root');
         }
