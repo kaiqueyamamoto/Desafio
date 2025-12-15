@@ -1,5 +1,5 @@
-import * as jwt from 'jsonwebtoken';
-import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 import { prisma } from './db';
 import { JwtPayload, RegisterDto, LoginDto } from '@/types';
 
@@ -10,6 +10,9 @@ if (!JWT_SECRET) {
   throw new Error('JWT_SECRET não está configurado nas variáveis de ambiente');
 }
 
+// Garantir que JWT_SECRET não é undefined para TypeScript
+const JWT_SECRET_STRING: string = JWT_SECRET;
+
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 10);
 }
@@ -19,14 +22,15 @@ export async function comparePassword(password: string, hash: string): Promise<b
 }
 
 export function generateToken(payload: JwtPayload): string {
-  return jwt.sign(payload, JWT_SECRET, {
+  return jwt.sign(payload, JWT_SECRET_STRING, {
     expiresIn: JWT_EXPIRES_IN,
-  });
+  } as jwt.SignOptions);
 }
 
 export function verifyToken(token: string): JwtPayload {
   try {
-    return jwt.verify(token, JWT_SECRET) as JwtPayload;
+    const decoded = jwt.verify(token, JWT_SECRET_STRING);
+    return decoded as unknown as JwtPayload;
   } catch (error) {
     throw new Error('Token inválido');
   }
