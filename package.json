@@ -14,8 +14,11 @@
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
+    "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
     "db:push": "prisma db push",
+    "db:migrate": "bash scripts/migrate.sh",
+    "db:migrate:deploy": "bash scripts/migrate.sh deploy",
     "cypress:open": "cypress open",
     "cypress:run": "cypress run",
     "test:e2e": "cypress run"

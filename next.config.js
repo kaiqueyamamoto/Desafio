@@ -6,6 +6,8 @@ const nextConfig = {
     'swagger-client',
     'react-syntax-highlighter',
   ],
+  // Habilitar output standalone para Docker
+  output: process.env.DOCKER_BUILD === 'true' ? 'standalone' : undefined,
 };
 
 module.exports = nextConfig;
