@@ -1,33 +1,42 @@
 const nextJest = require('next/jest');
 
 const createJestConfig = nextJest({
-  // Provide the path to your Next.js app to load next.config.js and .env files in your test environment
   dir: './',
 });
 
-// Add any custom config to be passed to Jest
-const customJestConfig = {
+// Configuração base
+const baseConfig = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
-  testEnvironment: 'node', // Mudado para node para testes de API
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
-  testMatch: ['**/tests/**/*.test.ts', '**/tests/**/*.test.tsx'],
   collectCoverageFrom: [
-    'src/**/*.{ts,tsx}',
+    'src/app/api/**/*.{ts,tsx}',
+    'src/lib/**/*.{ts,tsx}',
+    'src/middleware.ts',
+    'src/components/**/*.{ts,tsx}',
     '!src/**/*.d.ts',
     '!src/**/*.stories.{ts,tsx}',
     '!src/**/__tests__/**',
+    '!src/lib/hooks/**',
+    '!src/lib/providers/**',
   ],
-  globals: {
-    'ts-jest': {
-      tsconfig: {
-        esModuleInterop: true,
-        allowSyntheticDefaultImports: true,
-      },
-    },
-  },
 };
 
-// createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async
+// Função para determinar o ambiente baseado no caminho do teste
+function getTestEnvironment(testPath) {
+  if (testPath.includes('/tests/api/')) {
+    return 'node';
+  }
+  return 'jsdom';
+}
+
+// Configuração customizada
+const customJestConfig = {
+  ...baseConfig,
+  testMatch: ['**/tests/**/*.test.ts', '**/tests/**/*.test.tsx'],
+  // O next/jest vai usar jsdom por padrão, mas podemos sobrescrever por arquivo
+  testEnvironment: 'jsdom',
+};
+
 module.exports = createJestConfig(customJestConfig);
