@@ -86,4 +86,22 @@ export class AuthService {
       },
     };
   }
+
+  async getUserInfo(userId: number) {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      select: ['id', 'name', 'email', 'created_at'],
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Usuário não encontrado');
+    }
+
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      created_at: user.created_at,
+    };
+  }
 }
