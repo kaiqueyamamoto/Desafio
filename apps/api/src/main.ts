@@ -1,9 +1,10 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, Logger } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
+  const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule);
 
   // Habilitar CORS para o frontend
@@ -24,7 +25,9 @@ async function bootstrap() {
   // Configuração do Swagger
   const config = new DocumentBuilder()
     .setTitle('API de Gestão de Tarefas')
-    .setDescription('API RESTful para sistema de gestão de tarefas com autenticação JWT')
+    .setDescription(
+      'API RESTful para sistema de gestão de tarefas com autenticação JWT'
+    )
     .setVersion('1.0')
     .addBearerAuth(
       {
@@ -35,7 +38,7 @@ async function bootstrap() {
         description: 'Enter JWT token',
         in: 'header',
       },
-      'JWT-auth',
+      'JWT-auth'
     )
     .addTag('auth', 'Endpoints de autenticação')
     .addTag('tasks', 'Endpoints de gerenciamento de tarefas')
@@ -50,8 +53,8 @@ async function bootstrap() {
 
   const port = process.env.PORT || 3001;
   await app.listen(port);
-  console.log(`🚀 Application is running on: http://localhost:${port}`);
-  console.log(`📚 Swagger documentation: http://localhost:${port}/api`);
+  logger.log(`🚀 Application is running on: http://localhost:${port}`);
+  logger.log(`📚 Swagger documentation: http://localhost:${port}/api`);
 }
 
 bootstrap();
