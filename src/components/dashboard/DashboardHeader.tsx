@@ -13,9 +13,9 @@ export default function DashboardHeader({ viewMode, onViewModeChange }: Dashboar
   const { theme, toggleTheme } = useTheme();
 
   return (
-    <div className="flex justify-between items-center mb-6">
-      <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
-      <div className="flex items-center space-x-3">
+    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+      <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
         {/* Toggle de visualização Lista/Kanban */}
         <div className="flex items-center space-x-2 bg-gray-200 dark:bg-gray-700 rounded-lg p-1">
           <button
