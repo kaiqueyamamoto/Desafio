@@ -67,12 +67,74 @@ export async function GET(request: NextRequest) {
   const { user } = authResult;
 
   try {
-    const tasks = await prisma.task.findMany({
-      where: { user_id: user.userId },
-      orderBy: { created_at: 'desc' },
-    });
+    // Obter parâmetros de query
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    const limit = parseInt(searchParams.get('limit') || '10', 10);
+    const search = searchParams.get('search') || '';
+    const status = searchParams.get('status') as TaskStatus | null;
+    const sortBy = searchParams.get('sortBy') || 'created_at';
+    const sortOrder = searchParams.get('sortOrder') || 'desc';
 
-    const response = NextResponse.json({ tasks }, { status: 200 });
+    // Validar parâmetros
+    const validPage = Math.max(1, page);
+    const validLimit = Math.min(Math.max(1, limit), 100); // Máximo de 100 itens por página
+    const skip = (validPage - 1) * validLimit;
+
+    // Construir filtros
+    const where: any = {
+      user_id: user.userId,
+    };
+
+    // Filtro de status
+    if (status && Object.values(TaskStatus).includes(status)) {
+      where.status = status;
+    }
+
+    // Filtro de busca (busca em título e descrição)
+    // MySQL não suporta mode: 'insensitive', então usamos contains diretamente
+    if (search) {
+      where.OR = [
+        { title: { contains: search } },
+        { description: { contains: search } },
+      ];
+    }
+
+    // Construir ordenação
+    const orderBy: any = {};
+    const validSortBy = ['created_at', 'updated_at', 'title', 'status'].includes(sortBy)
+      ? sortBy
+      : 'created_at';
+    const validSortOrder = sortOrder === 'asc' ? 'asc' : 'desc';
+    orderBy[validSortBy] = validSortOrder;
+
+    // Buscar tarefas com paginação
+    const [tasks, total] = await Promise.all([
+      prisma.task.findMany({
+        where,
+        orderBy,
+        skip,
+        take: validLimit,
+      }),
+      prisma.task.count({ where }),
+    ]);
+
+    const totalPages = Math.ceil(total / validLimit);
+
+    const response = NextResponse.json(
+      {
+        tasks,
+        pagination: {
+          page: validPage,
+          limit: validLimit,
+          total,
+          totalPages,
+          hasNextPage: validPage < totalPages,
+          hasPrevPage: validPage > 1,
+        },
+      },
+      { status: 200 }
+    );
     return addCorsHeaders(response);
   } catch (error) {
     const response = NextResponse.json(
