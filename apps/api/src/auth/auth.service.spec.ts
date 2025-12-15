@@ -56,20 +56,18 @@ describe('AuthService', () => {
 
       mockDb.execute.mockResolvedValueOnce([[]]); // Email não existe - retorna [rows, fields]
       (bcrypt.hash as jest.Mock).mockResolvedValue('hashedPassword');
-      mockDb.execute.mockResolvedValueOnce([
-        { insertId: 1 },
-      ]); // Inserção bem-sucedida - retorna [result, fields] onde result tem insertId
+      mockDb.execute.mockResolvedValueOnce([{ insertId: 1 }]); // Inserção bem-sucedida - retorna [result, fields] onde result tem insertId
 
       const result = await service.register(registerDto);
 
       expect(mockDb.execute).toHaveBeenCalledWith(
         'SELECT id FROM users WHERE email = ?',
-        [registerDto.email],
+        [registerDto.email]
       );
       expect(bcrypt.hash).toHaveBeenCalledWith(registerDto.password, 10);
       expect(mockDb.execute).toHaveBeenCalledWith(
         'INSERT INTO users (name, email, password) VALUES (?, ?, ?)',
-        [registerDto.name, registerDto.email, 'hashedPassword'],
+        [registerDto.name, registerDto.email, 'hashedPassword']
       );
       expect(result).toEqual({
         message: 'Usuário criado com sucesso',
@@ -88,9 +86,7 @@ describe('AuthService', () => {
         password: 'senha123456',
       };
 
-      mockDb.execute.mockResolvedValueOnce([
-        [{ id: 1 }],
-      ]); // Email já existe
+      mockDb.execute.mockResolvedValueOnce([[{ id: 1 }]]); // Email já existe
 
       const promise = service.register(registerDto);
       await expect(promise).rejects.toThrow(ConflictException);
@@ -121,11 +117,11 @@ describe('AuthService', () => {
 
       expect(mockDb.execute).toHaveBeenCalledWith(
         'SELECT id, name, email, password FROM users WHERE email = ?',
-        [loginDto.email],
+        [loginDto.email]
       );
       expect(bcrypt.compare).toHaveBeenCalledWith(
         loginDto.password,
-        mockUser.password,
+        mockUser.password
       );
       expect(jwtService.sign).toHaveBeenCalledWith({
         sub: mockUser.id,
