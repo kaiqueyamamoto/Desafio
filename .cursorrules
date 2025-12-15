@@ -157,11 +157,96 @@ projeto/
   - Exemplo: Se você adicionar validação em 5 arquivos, fazer 5 commits separados
 
 ### Testes
-- **API Routes**: Testes obrigatórios para endpoints da API
-- **Cobertura mínima**: 60% dos endpoints
-- **Localização**: `tests/api/`
+
+#### Configuração
 - **Ferramentas**: Jest + React Testing Library
-- **Frontend**: Testes de componentes com React Testing Library
+- **Ambiente**: Node.js (para testes de API Routes)
+- **Configuração**: `jest.config.js` e `jest.setup.js`
+- **Localização**: `tests/api/` para testes de API, `tests/components/` para componentes
+
+#### Requisitos de Testes de Backend (Obrigatório)
+- **Testes de integração** para todos os endpoints da API
+- **Cobertura mínima**: 60% dos endpoints
+- **Testar autenticação**: registro, login, token inválido
+- **Testar CRUD de tarefas**: GET, POST, PUT, DELETE
+- **Testar isolamento de dados**: usuários só podem acessar suas próprias tarefas
+- **Usar mocks** para Prisma, bcrypt e middleware de autenticação
+
+#### Estrutura de Testes
+```typescript
+// tests/api/auth.test.ts
+import { POST } from '@/app/api/auth/register/route';
+import { NextRequest } from 'next/server';
+import { prisma } from '@/lib/db';
+
+jest.mock('@/lib/db', () => ({
+  prisma: {
+    user: {
+      findUnique: jest.fn(),
+      create: jest.fn(),
+    },
+  },
+}));
+
+describe('Auth API Routes', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('POST /api/auth/register', () => {
+    it('deve registrar um novo usuário com sucesso', async () => {
+      // Arrange
+      const mockUser = { id: 1, name: 'João', email: 'joao@example.com' };
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+      (prisma.user.create as jest.Mock).mockResolvedValue(mockUser);
+
+      // Act
+      const request = new NextRequest('http://localhost:3000/api/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({ name: 'João', email: 'joao@example.com', password: 'Senha123!@#' }),
+      });
+      const response = await POST(request);
+      const data = await response.json();
+
+      // Assert
+      expect(response.status).toBe(201);
+      expect(data.message).toBe('Usuário criado com sucesso');
+    });
+  });
+});
+```
+
+#### Padrões de Testes
+- **Arrange-Act-Assert (AAA)**: Organizar, Executar, Verificar
+- **Mocks**: Sempre mockar dependências externas (Prisma, bcrypt, etc.)
+- **Isolamento**: Cada teste deve ser independente
+- **Nomes descritivos**: Usar nomes que descrevam o comportamento esperado
+- **Cenários de erro**: Testar casos de sucesso e erro
+
+#### Executando Testes
+```bash
+# Executar todos os testes
+pnpm test
+
+# Executar testes em modo watch (desenvolvimento)
+pnpm test:watch
+
+# Executar testes com cobertura
+pnpm test:cov
+
+# Executar testes de um arquivo específico
+pnpm test tests/api/auth.test.ts
+```
+
+#### Checklist de Testes
+Antes de commitar código novo:
+- [ ] Testes escritos para novos endpoints
+- [ ] Testes de autenticação (sucesso e erro)
+- [ ] Testes de isolamento de dados
+- [ ] Testes de validação de entrada
+- [ ] Testes de tratamento de erros
+- [ ] Todos os testes passando
+- [ ] Cobertura mínima de 60% atingida
 
 ### Formatação
 - **Prettier**: Configurado no projeto
