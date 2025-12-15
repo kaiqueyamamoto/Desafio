@@ -1,5 +1,6 @@
 import { IsString, IsOptional, IsEnum } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { TaskStatus } from '@prisma/client';
 
 export class UpdateTaskDto {
   @ApiPropertyOptional({
@@ -20,11 +21,11 @@ export class UpdateTaskDto {
 
   @ApiPropertyOptional({
     description: 'Status da tarefa',
-    enum: ['pending', 'in_progress', 'completed'],
-    example: 'completed',
+    enum: TaskStatus,
+    example: TaskStatus.COMPLETED,
   })
   @IsOptional()
-  @IsEnum(['pending', 'in_progress', 'completed'])
-  status?: 'pending' | 'in_progress' | 'completed';
+  @IsEnum(TaskStatus)
+  status?: TaskStatus;
 }
 
