@@ -10,8 +10,8 @@ export const loginSchema = z.object({
     .min(1, 'Senha é obrigatória'),
 });
 
-export const registerSchema = z
-  .object({
+// Schema base para registro
+const registerBaseSchema = z.object({
     name: z
       .string()
       .min(1, 'Nome é obrigatório')
@@ -31,11 +31,20 @@ export const registerSchema = z
     confirmPassword: z
       .string()
       .min(1, 'Confirmação de senha é obrigatória'),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
+});
+
+// Schema para a API (sem confirmPassword)
+export const registerApiSchema = registerBaseSchema.omit({ confirmPassword: true });
+
+// Schema completo para formulário (com validação de confirmação de senha)
+export const registerSchema = registerBaseSchema.refine(
+  (data) => data.password === data.confirmPassword,
+  {
     message: 'As senhas não coincidem',
     path: ['confirmPassword'],
-  });
+  }
+);
 
 export type LoginFormData = z.infer<typeof loginSchema>;
 export type RegisterFormData = z.infer<typeof registerSchema>;
+export type RegisterApiDto = z.infer<typeof registerApiSchema>;
