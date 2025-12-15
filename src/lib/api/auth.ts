@@ -38,12 +38,15 @@ export async function login(data: LoginFormData): Promise<AuthResponse> {
 }
 
 export async function register(data: RegisterFormData): Promise<RegisterResponse> {
+  // Remover confirmPassword antes de enviar
+  const { confirmPassword, ...registerData } = data;
+  
   const response = await fetch(`${API_URL}/api/auth/register`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(data),
+    body: JSON.stringify(registerData),
   });
 
   if (!response.ok) {
@@ -62,9 +65,13 @@ export function getAuthToken(): string | null {
 export function setAuthToken(token: string): void {
   if (typeof window === 'undefined') return;
   localStorage.setItem('auth_token', token);
+  // Também salvar em cookie para o middleware do Next.js
+  document.cookie = `auth_token=${token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
 }
 
 export function removeAuthToken(): void {
   if (typeof window === 'undefined') return;
   localStorage.removeItem('auth_token');
+  // Remover cookie também
+  document.cookie = 'auth_token=; path=/; max-age=0';
 }
