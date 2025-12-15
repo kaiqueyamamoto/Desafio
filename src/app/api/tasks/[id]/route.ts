@@ -1,15 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { authenticateRequest } from '@/lib/middleware';
-import { prisma } from '@/lib/db';
-import { TaskStatus } from '@/types';
-import { z } from 'zod';
-import { addCorsHeaders, createCorsResponse } from '@/lib/cors';
-
-const updateTaskSchema = z.object({
-  title: z.string().min(1, 'Título é obrigatório').optional(),
-  description: z.string().optional(),
-  status: z.nativeEnum(TaskStatus).optional(),
-});
+import { NextRequest } from 'next/server';
+import { taskController } from '@/lib/controllers/task.controller';
+import { createCorsResponse } from '@/lib/cors';
 
 /**
  * @swagger
@@ -105,74 +96,8 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const authResult = await authenticateRequest(request);
-
-  if (authResult instanceof NextResponse) {
-    return addCorsHeaders(authResult);
-  }
-
-  const { user } = authResult;
   const taskId = parseInt(params.id);
-
-  if (isNaN(taskId)) {
-    const response = NextResponse.json(
-      { error: 'ID da tarefa inválido' },
-      { status: 400 }
-    );
-    return addCorsHeaders(response);
-  }
-
-  try {
-    // Verificar se a tarefa existe e pertence ao usuário
-    const task = await prisma.task.findUnique({
-      where: { id: taskId },
-    });
-
-    if (!task) {
-      const response = NextResponse.json(
-        { error: 'Tarefa não encontrada' },
-        { status: 404 }
-      );
-      return addCorsHeaders(response);
-    }
-
-    if (task.user_id !== user.userId) {
-      const response = NextResponse.json(
-        { error: 'Você não tem permissão para acessar esta tarefa' },
-        { status: 403 }
-      );
-      return addCorsHeaders(response);
-    }
-
-    const body = await request.json();
-    const validatedData = updateTaskSchema.parse(body);
-
-    const updatedTask = await prisma.task.update({
-      where: { id: taskId },
-      data: {
-        ...(validatedData.title !== undefined && { title: validatedData.title }),
-        ...(validatedData.description !== undefined && { description: validatedData.description }),
-        ...(validatedData.status !== undefined && { status: validatedData.status }),
-      },
-    });
-
-    const response = NextResponse.json({ task: updatedTask }, { status: 200 });
-    return addCorsHeaders(response);
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      const response = NextResponse.json(
-        { error: 'Dados inválidos', details: error.errors },
-        { status: 400 }
-      );
-      return addCorsHeaders(response);
-    }
-
-    const response = NextResponse.json(
-      { error: 'Erro ao atualizar tarefa' },
-      { status: 500 }
-    );
-    return addCorsHeaders(response);
-  }
+  return taskController.update(request, taskId);
 }
 
 /**
@@ -246,59 +171,6 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const authResult = await authenticateRequest(request);
-
-  if (authResult instanceof NextResponse) {
-    return addCorsHeaders(authResult);
-  }
-
-  const { user } = authResult;
   const taskId = parseInt(params.id);
-
-  if (isNaN(taskId)) {
-    const response = NextResponse.json(
-      { error: 'ID da tarefa inválido' },
-      { status: 400 }
-    );
-    return addCorsHeaders(response);
-  }
-
-  try {
-    // Verificar se a tarefa existe e pertence ao usuário
-    const task = await prisma.task.findUnique({
-      where: { id: taskId },
-    });
-
-    if (!task) {
-      const response = NextResponse.json(
-        { error: 'Tarefa não encontrada' },
-        { status: 404 }
-      );
-      return addCorsHeaders(response);
-    }
-
-    if (task.user_id !== user.userId) {
-      const response = NextResponse.json(
-        { error: 'Você não tem permissão para acessar esta tarefa' },
-        { status: 403 }
-      );
-      return addCorsHeaders(response);
-    }
-
-    await prisma.task.delete({
-      where: { id: taskId },
-    });
-
-    const response = NextResponse.json(
-      { message: 'Tarefa deletada com sucesso' },
-      { status: 200 }
-    );
-    return addCorsHeaders(response);
-  } catch (error) {
-    const response = NextResponse.json(
-      { error: 'Erro ao deletar tarefa' },
-      { status: 500 }
-    );
-    return addCorsHeaders(response);
-  }
+  return taskController.delete(request, taskId);
 }
