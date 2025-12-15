@@ -3,8 +3,12 @@ import bcrypt from 'bcrypt';
 import { prisma } from './db';
 import { JwtPayload, RegisterDto, LoginDto } from '@/types';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your_super_secret_jwt_key_change_in_production';
+const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
+
+if (!JWT_SECRET) {
+  throw new Error('JWT_SECRET não está configurado nas variáveis de ambiente');
+}
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 10);
