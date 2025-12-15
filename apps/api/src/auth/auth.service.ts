@@ -73,8 +73,16 @@ export class AuthService {
       throw new UnauthorizedException('Email ou senha inválidos');
     }
 
-    // Gerar token JWT
-    const payload = { sub: user.id, email: user.email };
+    // Incrementar token_version para invalidar tokens antigos
+    user.token_version = (user.token_version || 0) + 1;
+    await this.userRepository.save(user);
+
+    // Gerar token JWT com token_version
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      tokenVersion: user.token_version,
+    };
     const token = this.jwtService.sign(payload);
 
     return {
